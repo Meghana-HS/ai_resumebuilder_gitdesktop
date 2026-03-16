@@ -24,4 +24,14 @@ public class SectionScore {
 
     @Column(nullable = false)
     private Integer score;
+    
+    // Manual getters/setters to fix compilation issues
+    public AtsScan getAtsScan() { return atsScan; }
+    public void setAtsScan(AtsScan atsScan) { this.atsScan = atsScan; }
+    
+    public String getSectionName() { return sectionName; }
+    public void setSectionName(String sectionName) { this.sectionName = sectionName; }
+    
+    public Integer getScore() { return score; }
+    public void setScore(Integer score) { this.score = score; }
 }

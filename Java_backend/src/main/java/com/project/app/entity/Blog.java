@@ -50,4 +50,29 @@ public class Blog {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    // Manual getters/setters to fix compilation issues
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    
+    public String getExcerpt() { return excerpt; }
+    public void setExcerpt(String excerpt) { this.excerpt = excerpt; }
+    
+    public String getDetail() { return detail; }
+    public void setDetail(String detail) { this.detail = detail; }
+    
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
+    
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+    
+    public String getReadTime() { return readTime; }
+    public void setReadTime(String readTime) { this.readTime = readTime; }
+    
+    public Boolean getIsPublished() { return isPublished; }
+    public void setIsPublished(Boolean isPublished) { this.isPublished = isPublished; }
 }

@@ -53,4 +53,29 @@ public class AtsScan {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    // Manual getters/setters to fix compilation issues
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    
+    public ResumeProfile getResumeProfile() { return resumeProfile; }
+    public void setResumeProfile(ResumeProfile resumeProfile) { this.resumeProfile = resumeProfile; }
+    
+    public String getTemplateId() { return templateId; }
+    public void setTemplateId(String templateId) { this.templateId = templateId; }
+    
+    public String getJobTitle() { return jobTitle; }
+    public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
+    
+    public Integer getOverallScore() { return overallScore; }
+    public void setOverallScore(Integer overallScore) { this.overallScore = overallScore; }
+    
+    public List<SectionScore> getSectionScores() { return sectionScores; }
+    public void setSectionScores(List<SectionScore> sectionScores) { this.sectionScores = sectionScores; }
+    
+    public List<MatchedKeyword> getMatchedKeywords() { return matchedKeywords; }
+    public void setMatchedKeywords(List<MatchedKeyword> matchedKeywords) { this.matchedKeywords = matchedKeywords; }
+    
+    public List<MissingKeyword> getMissingKeywords() { return missingKeywords; }
+    public void setMissingKeywords(List<MissingKeyword> missingKeywords) { this.missingKeywords = missingKeywords; }
 }

@@ -124,18 +124,28 @@ const Dashboard = ({ setActivePage }) => {
         setLoading(true);
         const [userRes, summaryRes] = await Promise.all([
           axiosInstance.get("/api/user/dashboard"),
-          axiosInstance.get("/api/dashboard/summary", {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-          })
+          axiosInstance.get("/api/dashboard/summary") // Remove Authorization header for Java backend
         ]);
-        setDashboardData(userRes.data);
-        setSummaryData(summaryRes.data);
+        
+        // Handle Java backend response structure: {success, message, data}
+        const dashboardUserData = userRes.data.data || userRes.data.user; // Fallback for MERN backend
+        if (dashboardUserData) {
+          setDashboardData(dashboardUserData);
+        }
+        
+        // Handle summary response (might be from different backend)
+        const summaryDataResponse = summaryRes.data.data || summaryRes.data;
+        setSummaryData(summaryDataResponse);
+        
         setError(null);
       } catch (err) {
         console.error("Dashboard fetch failed", err);
-        setError("Failed to load dashboard data. Please try again later.");
+        // Don't fail the entire dashboard if summary fails
+        if (dashboardData) {
+          setError(null); // Clear error if we at least have user data
+        } else {
+          setError("Failed to load dashboard data. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
@@ -261,7 +271,7 @@ const Dashboard = ({ setActivePage }) => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              Welcome back, {user.name || "User"}{" "}
+              Welcome back, {user.username || user.name || "User"}{" "}
               <HiSparkles className="text-blue-500" />
             </h1>
             <p className="text-slate-500 mt-1 text-sm sm:text-base">

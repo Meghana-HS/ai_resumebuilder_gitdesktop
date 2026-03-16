@@ -50,11 +50,13 @@ export default function UserNavbar() {
     const fetchProfile = async () => {
       try {
         const res = await axiosInstance.get("/api/user/profile");
-        if (res.data?.user) {
+        // Handle Java backend response structure: {success, message, data}
+        const userData = res.data.data || res.data.user; // Fallback for MERN backend
+        if (userData) {
           setUser({
-            name: res.data.user.username || "User",
-            email: res.data.user.email || "",
-            isAdmin: res.data.user.isAdmin || false,
+            name: userData.username || userData.name || "User",
+            email: userData.email || "",
+            isAdmin: userData.isAdmin || false,
           });
         }
       } catch (err) {

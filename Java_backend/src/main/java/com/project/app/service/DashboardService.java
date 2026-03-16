@@ -20,6 +20,9 @@ public class DashboardService {
     @Autowired
     private ResumeRepository resumeRepository;
 
+    @Autowired
+    private DownloadService downloadService;
+
     public Map<String, Object> getDashboardSummary(Long userId) {
         Map<String, Object> summary = new HashMap<>();
         
@@ -35,6 +38,10 @@ public class DashboardService {
                 "profileViews", user.getProfileViews()
             ));
         });
+        
+        // Get download statistics
+        Map<String, Object> downloadStats = downloadService.getDashboardSummary(userId);
+        summary.putAll(downloadStats);
         
         // Resume count - temporarily using findAll
         List<Resume> resumes = resumeRepository.findAll();
@@ -71,13 +78,31 @@ public class DashboardService {
             .orElse(0));
         
         stats.put("atsChecks", 0);
-        stats.put("downloads", 0);
+        
+        // Get actual download count
+        Map<String, Object> downloadStats = downloadService.getDashboardSummary(userId);
+        stats.put("downloads", downloadStats.get("totalDownloads"));
         
         return stats;
     }
 
     public Map<String, Object> getRecentActivity(Long userId) {
         Map<String, Object> activity = new HashMap<>();
+        
+        // Get recent downloads
+        var recentDownloads = downloadService.getRecentActivity(userId);
+        
+        activity.put("recentActivity", recentDownloads.stream()
+            .limit(5)
+            .map(download -> Map.of(
+                "id", download.getId(),
+                "title", download.getName(),
+                "type", download.getType().toString(),
+                "action", download.getAction().toString(),
+                "timestamp", download.getDownloadDate(),
+                "description", "Downloaded " + download.getType().toString().toLowerCase()
+            ))
+            .toList());
         
         // Get recent resumes - temporarily using findAll
         List<Resume> recentResumes = resumeRepository.findAll();

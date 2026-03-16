@@ -21,14 +21,17 @@ export const UserNotificationProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            console.log('Fetching user notifications from /api/notifications/user');
-            const response = await axiosInstance.get('/api/notifications/user');
+            console.log('Fetching user notifications from /api/notifications');
+            const response = await axiosInstance.get('/api/notifications');
             
             console.log('User notification response:', response.data);
             
-            if (response.data.success && response.data.data) {
+            // Handle Java backend response structure: {success, message, data}
+            const notificationsData = response.data.data || response.data;
+            
+            if (Array.isArray(notificationsData)) {
                 // Transform backend data to UI format
-                const transformedNotifications = response.data.data.map((notif) => {
+                const transformedNotifications = notificationsData.map((notif) => {
                     const createdAt = new Date(notif.createdAt);
                     const now = new Date();
                     const diffMs = now - createdAt;
@@ -58,13 +61,16 @@ export const UserNotificationProvider = ({ children }) => {
                         'TEMPLATE_APPROVED': 'success',
                     };
 
-                    // Get username
-                    const username = typeof notif.userId === 'object' 
-                        ? notif.userId?.username 
-                        : 'System';
+                    // Get username - handle different data structures
+                    let username = 'System';
+                    if (notif.actor) {
+                        username = notif.actor;
+                    } else if (notif.userId && typeof notif.userId === 'object') {
+                        username = notif.userId.username || 'System';
+                    }
 
                     return {
-                        id: notif._id,
+                        id: notif.id || notif._id,
                         type: typeMap[notif.type] || 'info',
                         title: notif.type ? notif.type.replace(/_/g, ' ') : 'Notification',
                         description: notif.message,
@@ -80,7 +86,7 @@ export const UserNotificationProvider = ({ children }) => {
                 console.log('Transformed user notifications:', transformedNotifications);
                 setNotifications(transformedNotifications);
             } else {
-                console.warn('No data in response or success is false');
+                console.warn('Expected array but got:', typeof notificationsData, notificationsData);
                 setNotifications([]);
             }
         } catch (err) {

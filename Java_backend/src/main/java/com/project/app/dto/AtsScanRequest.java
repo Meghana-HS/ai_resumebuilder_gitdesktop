@@ -10,4 +10,9 @@ public class AtsScanRequest {
     
     private String templateId;
     private Long resumeProfileId;
+    
+    // Manual getters to fix compilation issues
+    public String getJobTitle() { return jobTitle; }
+    public String getTemplateId() { return templateId; }
+    public Long getResumeProfileId() { return resumeProfileId; }
 }

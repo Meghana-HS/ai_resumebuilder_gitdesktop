@@ -21,4 +21,11 @@ public class MissingKeyword {
 
     @Column(nullable = false)
     private String keyword;
+    
+    // Manual getters/setters to fix compilation issues
+    public AtsScan getAtsScan() { return atsScan; }
+    public void setAtsScan(AtsScan atsScan) { this.atsScan = atsScan; }
+    
+    public String getKeyword() { return keyword; }
+    public void setKeyword(String keyword) { this.keyword = keyword; }
 }

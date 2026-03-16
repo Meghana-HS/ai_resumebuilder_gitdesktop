@@ -88,4 +88,9 @@ public class Resume {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    // Manual getters to fix compilation issues
+    public Long getId() { return id; }
+    public String getTitle() { return title; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

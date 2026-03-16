@@ -21,9 +21,20 @@ export const PricingProvider = ({ children }) => {
       setLoading(true);
       const response = await axiosInstance.get('/api/plans');
       
+      // Handle Java backend response structure: {success, message, data}
+      const plansData = response.data.data || response.data;
+      
+      // Ensure plansData is an array before mapping
+      if (!Array.isArray(plansData)) {
+        console.error('Expected array but got:', typeof plansData, plansData);
+        setPlans([]);
+        setLoading(false);
+        return;
+      }
+      
       // Transform backend data to match frontend format
-      const transformedPlans = response.data.map(plan => ({
-        id: plan.planId,
+      const transformedPlans = plansData.map(plan => ({
+        id: plan.planId || plan.id,
         name: plan.name,
         badge : plan.badge,
         price: plan.price,
@@ -37,6 +48,7 @@ export const PricingProvider = ({ children }) => {
       setLoading(false);
     } catch (err) {
       console.error('Failed to fetch plans', err);
+      setPlans([]);
       setLoading(false);
     }
   };
