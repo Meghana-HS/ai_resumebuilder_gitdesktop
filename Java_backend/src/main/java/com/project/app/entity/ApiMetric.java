@@ -1,11 +1,13 @@
 package com.project.app.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Data
 @Table(name = "api_metrics")
 public class ApiMetric {
     

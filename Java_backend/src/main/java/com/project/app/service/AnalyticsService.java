@@ -99,7 +99,7 @@ public class AnalyticsService {
                 "timestamp", metric.getTimestamp(),
                 "user", metric.getUser() != null ? metric.getUser().getUsername() : "Anonymous"
             ))
-            .collect(java.util.stream.Collectors.toList()));
+            .toList());
         
         return overview;
     }
