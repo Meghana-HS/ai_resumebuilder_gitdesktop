@@ -1,9 +1,7 @@
 package com.project.app.dto;
 
 import com.project.app.entity.Download;
-import lombok.Data;
 
-@Data
 public class DownloadRequest {
     private String name;
     private String type; // "resume", "cover-letter", "cv"

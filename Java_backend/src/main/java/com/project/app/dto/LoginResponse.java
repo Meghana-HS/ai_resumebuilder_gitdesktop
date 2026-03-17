@@ -1,8 +1,5 @@
 package com.project.app.dto;
 
-import lombok.Data;
-
-@Data
 public class LoginResponse {
     private Boolean success;
     private String message;

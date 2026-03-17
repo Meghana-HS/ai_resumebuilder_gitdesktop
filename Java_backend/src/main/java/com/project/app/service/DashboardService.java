@@ -102,7 +102,7 @@ public class DashboardService {
                 "timestamp", download.getDownloadDate(),
                 "description", "Downloaded " + download.getType().toString().toLowerCase()
             ))
-            .toList());
+            .collect(java.util.stream.Collectors.toList()));
         
         // Get recent resumes - temporarily using findAll
         List<Resume> recentResumes = resumeRepository.findAll();
@@ -115,7 +115,7 @@ public class DashboardService {
                 "updatedAt", resume.getUpdatedAt(),
                 "action", "updated"
             ))
-            .toList());
+            .collect(java.util.stream.Collectors.toList()));
         
         activity.put("lastActivity", LocalDateTime.now());
         
