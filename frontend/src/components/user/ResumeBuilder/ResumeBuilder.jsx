@@ -248,35 +248,89 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
   const GenerateResumePDF = async (resumeHtml) => {
     try {
       setLoading(true);
-      console.log("Resume html:", resumeHtml);
+      
+      // Create a temporary container to render the HTML
+      const container = document.createElement("div");
+      Object.assign(container.style, {
+        position: "fixed",
+        top: "0",
+        left: "-9999px",
+        width: "794px", // A4 width in pixels at 96 DPI
+        background: "#ffffff",
+      });
+      document.body.appendChild(container);
 
-      const response = await axiosInstance.post(
-        "/api/resume/generate-pdf",
-        { html: resumeHtml },
-        {
-          responseType: "blob",
-        },
-      );
-      const blob = new Blob([response.data], {
-        type: "application/pdf",
+      // Get the current template component
+      const templateComponent = currentTemplate?.component;
+      if (!templateComponent) {
+        throw new Error("No template component found");
+      }
+
+      const { createRoot } = await import("react-dom/client");
+      
+      await new Promise((resolve) => {
+        const root = createRoot(container);
+        root.render(templateComponent({ data: formData }));
+        setTimeout(resolve, 400);
       });
 
-      const url = window.URL.createObjectURL(blob);
-      console.log(url);
+      // Use html2canvas and jsPDF like CV builder
+      const html2canvas = (await import("html2canvas")).default;
+      const jsPDF = (await import("jspdf")).default;
 
-      const link = document.createElement("a");
-      link.href = url;
-      const sanitize = (s) =>
-        (s || "")
-          .replace(/[^a-z0-9_\- ]/gi, "")
+      const canvas = await html2canvas(container, {
+        scale: 3,
+        useCORS: true,
+        windowWidth: 794,
+      });
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const mmPageW = 210;
+      const mmPageH = 297;
+      const marginMm = 30;
+      const contentW = mmPageW - 2 * marginMm;
+      const contentH = mmPageH - marginMm;
+      const pxPerMm = canvas.width / mmPageW;
+      const pxContentH = Math.round(contentH * pxPerMm);
+
+      let yPx = 0;
+      let firstPage = true;
+
+      while (yPx < canvas.height) {
+        const sliceH = Math.min(pxContentH, canvas.height - yPx);
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = pxContentH;
+        const ctx = pageCanvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0,
+          yPx,
+          canvas.width,
+          sliceH,
+          0,
+          0,
+          canvas.width,
+          sliceH,
+        );
+        const imgData = pageCanvas.toDataURL("image/jpeg", 0.96);
+        if (!firstPage) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", marginMm, marginMm, contentW, contentH);
+        yPx += sliceH;
+        firstPage = false;
+      }
+
+      const clean = (str) =>
+        str
+          ?.replace(/[^a-z0-9_\- ]/gi, "")
           .trim()
           .replace(/\s+/g, "_");
-      const fileName =
-        sanitize(documentTitle) || sanitize(formData.fullName) || "Resume";
-      link.download = `${fileName}.pdf`;
-      link.click();
+      const name = clean(documentTitle) || clean(formData?.fullName) || "Resume";
+      pdf.save(`${name}.pdf`);
 
-      window.URL.revokeObjectURL(url);
+      document.body.removeChild(container);
     } catch (error) {
       console.error("PDF generation failed:", error);
       alert("Failed to generate resume PDF");
@@ -287,11 +341,9 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
 
   const handleDownload = async (e) => {
     if (exporting) return;
-    const html = await previewRef.current?.getResumeHTML();
-    if (!html) return;
     try {
       setExporting(true);
-      await GenerateResumePDF(html);
+      await GenerateResumePDF();
 
       // Save download record to database
       try {
@@ -300,7 +352,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
           name: `Resume - ${nameToUse}`,
           type: "resume",
           format: "PDF",
-          html,
+          html: "", // Empty since we're not using HTML anymore
           template: selectedTemplate,
           size: "250 KB",
         });
@@ -313,37 +365,245 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
   };
 
   const handleDownloadWord = async () => {
-    const html = await previewRef.current?.getResumeHTML();
-    if (!html) return;
-    const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Resume</title></head><body>${html}</body></html>`;
-    const blob = new Blob(["\uFEFF", wordHtml], { type: "application/msword" });
-    const url = URL.createObjectURL(blob);
-    const sanitize = (s) =>
-      (s || "")
-        .replace(/[^a-z0-9_\- ]/gi, "")
-        .trim()
-        .replace(/\s+/g, "_");
-    const fileName =
-      sanitize(documentTitle) || sanitize(formData.fullName) || "Resume";
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileName}.doc`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const templateComponent = currentTemplate?.component;
+    const templateStyle = currentTemplate?.style;
+    if (!templateComponent) {
+      alert("No template selected");
+      return;
+    }
 
-    // Save download record to database
+    const container = document.createElement("div");
+    Object.assign(container.style, {
+      position: "fixed",
+      top: "0",
+      left: "-9999px",
+      width: "794px", // A4 width in pixels at 96 DPI
+      background: "#ffffff",
+    });
+    document.body.appendChild(container);
+
     try {
-      const nameToUse = documentTitle || formData.fullName || "Resume";
-      await axiosInstance.post("/api/downloads", {
-        name: `Resume - ${nameToUse}`,
-        type: "resume",
-        format: "DOCX",
-        html,
-        template: selectedTemplate,
-        size: "200 KB",
+      const { createRoot } = await import("react-dom/client");
+      
+      await new Promise((resolve) => {
+        const root = createRoot(container);
+        root.render(templateComponent({ data: formData }));
+        setTimeout(resolve, 400);
       });
+
+      const bodyHtml = container.innerHTML;
+      
+      // Enhanced Word document with better CSS preservation
+      const wordHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <title>Resume</title>
+          <style>
+            @page {
+              size: A4;
+              margin: 0.5in;
+            }
+            body {
+              font-family: 'Palatino Linotype', 'Georgia', serif;
+              color: #4a4a4a;
+              line-height: 16px;
+              background-color: white;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            /* Jessica Claire Template Styles - Word Optimized */
+            .jessica-claire-template {
+              font-family: 'Palatino Linotype', 'Georgia', serif;
+              color: #4a4a4a;
+              line-height: 16px;
+              background-color: white;
+              width: 794px;
+              min-height: 1123px;
+              margin: 0 auto;
+              overflow: hidden;
+            }
+
+            .jessica-claire-template * {
+              box-sizing: border-box;
+            }
+
+            .jessica-claire-template .paddedline {
+              font-size: 12px;
+              display: block;
+            }
+
+            .jessica-claire-template .txtBold {
+              font-weight: bold;
+            }
+
+            .jessica-claire-template .txtItl {
+              font-style: italic;
+            }
+
+            .jessica-claire-template .heading {
+              padding-bottom: 10px;
+              font-weight: bold;
+              font-size: 18px;
+            }
+
+            .jessica-claire-template .sectiontitle {
+              font-family: "Georgia", serif;
+              font-style: italic;
+              font-size: 18px;
+              line-height: 17px;
+              letter-spacing: 0.5px;
+              text-transform: uppercase;
+              color: #3c5769 !important;
+            }
+
+            .jessica-claire-template .section {
+              border-top: 1px solid #c4c4c4;
+              padding-top: 20px;
+              margin-bottom: 20px;
+            }
+
+            .jessica-claire-template .firstsection {
+              border: none;
+              background-color: #3c5769 !important;
+              color: #fff !important;
+              padding: 20px;
+              text-align: center;
+            }
+
+            .jessica-claire-template .monogram {
+              text-align: center;
+              margin-bottom: 10px;
+            }
+
+            .jessica-claire-template .monogram svg {
+              text-transform: uppercase;
+            }
+
+            .jessica-claire-template .monogram svg text {
+              fill: #ffffff !important;
+            }
+
+            .jessica-claire-template .name {
+              font-size: 30px;
+              line-height: 28px;
+              font-weight: 700;
+              text-align: center;
+              padding-bottom: 5px;
+              letter-spacing: 1.5px;
+              font-family: "Georgia", serif;
+              font-style: italic;
+              color: #fff !important;
+            }
+
+            .jessica-claire-template .parentContainer {
+              display: flex;
+              width: 100%;
+            }
+
+            .jessica-claire-template .left-box {
+              width: 60%;
+              padding: 20px;
+            }
+
+            .jessica-claire-template .right-box {
+              width: 40%;
+              background-color: #f5f5f5 !important;
+              padding: 20px;
+            }
+
+            .jessica-claire-template .paragraph {
+              margin-top: 10px;
+              font-size: 10px;
+              line-height: 15px;
+            }
+
+            .jessica-claire-template ul {
+              list-style: none;
+              padding: 0;
+              margin: 5px 0 0 10px;
+            }
+
+            .jessica-claire-template li {
+              position: relative;
+              margin-bottom: 2px;
+            }
+
+            .jessica-claire-template li:before {
+              content: '●';
+              position: absolute;
+              left: -12px;
+              font-size: 8px;
+              top: 4px;
+              color: #3c5769 !important;
+            }
+
+            .jessica-claire-template .address {
+              font-size: 10px;
+              line-height: 15px;
+            }
+
+            .jessica-claire-template a {
+              color: inherit;
+              text-decoration: none;
+            }
+
+            /* Word-specific fixes */
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .page-break {
+              page-break-before: always;
+            }
+            .no-break {
+              page-break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          ${bodyHtml}
+        </body>
+        </html>
+      `;
+      
+      const blob = new Blob(["\uFEFF", wordHtml], {
+        type: "application/msword",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const clean = (s) =>
+        (s || "")
+          .replace(/[^a-z0-9_\- ]/gi, "")
+          .trim()
+          .replace(/\s+/g, "_");
+      a.download = `${clean(documentTitle) || clean(formData.fullName) || "Resume"}.doc`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // Save download record to database
+      try {
+        const nameToUse = documentTitle || formData.fullName || "Resume";
+        await axiosInstance.post("/api/downloads", {
+          name: `Resume - ${nameToUse}`,
+          type: "resume",
+          format: "DOCX",
+          html: bodyHtml,
+          template: selectedTemplate,
+          size: "200 KB",
+        });
+      } catch (err) {
+        console.error("Failed to save resume download:", err);
+      }
     } catch (err) {
-      console.error("Failed to save resume download:", err);
+      console.error("Word download error:", err);
+      alert("Failed to download Word.");
+    } finally {
+      document.body.removeChild(container);
     }
   };
 
