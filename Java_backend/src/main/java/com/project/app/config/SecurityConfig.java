@@ -2,6 +2,8 @@ package com.project.app.config;
 
 import com.project.app.security.CustomUserDetailsService;
 import com.project.app.security.JwtAuthenticationFilter;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,9 +21,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -41,43 +40,68 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider authProvider =
+            new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(customUserDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration config
+    ) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/test/**").permitAll()
-                .requestMatchers("/api/template").permitAll()
-                .requestMatchers("/api/template/{id}").permitAll()
-                .requestMatchers("/api/template/parse/{id}").permitAll()
-                .requestMatchers("/api/blog").permitAll()
-                .requestMatchers("/api/blog/{id}").permitAll()
-                .requestMatchers("/api/plans").permitAll()
-                .requestMatchers("/uploads/**").permitAll()
-                .requestMatchers("/api/downloads/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                // Admin endpoints
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                // All other endpoints need authentication
-                .anyRequest().authenticated()
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(auth ->
+                auth
+                    // Public endpoints
+                    .requestMatchers("/api/auth/**")
+                    .permitAll()
+                    .requestMatchers("/api/ai/**")
+                    .permitAll()
+                    .requestMatchers("/api/test/**")
+                    .permitAll()
+                    .requestMatchers("/api/template")
+                    .permitAll()
+                    .requestMatchers("/api/template/{id}")
+                    .permitAll()
+                    .requestMatchers("/api/template/parse/{id}")
+                    .permitAll()
+                    .requestMatchers("/api/blog")
+                    .permitAll()
+                    .requestMatchers("/api/blog/{id}")
+                    .permitAll()
+                    .requestMatchers("/api/plans")
+                    .permitAll()
+                    .requestMatchers("/uploads/**")
+                    .permitAll()
+                    .requestMatchers("/api/downloads/**")
+                    .permitAll()
+                    .requestMatchers("/h2-console/**")
+                    .permitAll()
+                    // Admin endpoints
+                    .requestMatchers("/api/admin/**")
+                    .hasRole("ADMIN")
+                    // All other endpoints need authentication
+                    .anyRequest()
+                    .authenticated()
             )
             .headers(headers -> headers.frameOptions().disable())
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }
@@ -85,13 +109,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedOriginPatterns(
+            List.of("http://localhost:*", "http://127.0.0.1:*")
+        );
+        configuration.setAllowedMethods(
+            Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+        );
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

@@ -174,9 +174,15 @@ const CoverLetterBuilder = () => {
 
     jobReference: "",
 
+    whereFound: "",
+
     jobSummary: "",
 
     jobDescription: "",
+
+    skills: "",
+
+    experience: "",
 
     openingParagraph: "",
 
@@ -200,6 +206,8 @@ const CoverLetterBuilder = () => {
   const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   const [isAiMode, setIsAiMode] = useState(false);
+
+  const [aiTone, setAiTone] = useState("professional");
 
   const [documentTitle, setDocumentTitle] = useState("");
 
@@ -255,7 +263,7 @@ const CoverLetterBuilder = () => {
 
       const html = container.innerHTML;
 
-      await saveRecentActivity(html, "visited");
+      await saveRecentActivity(html, "edited");
 
       document.body.removeChild(container);
     };
@@ -303,6 +311,7 @@ const CoverLetterBuilder = () => {
         name: `coverletter_${sanitizeForName(documentTitle || formData.fullName || "Document")}`,
 
         type: "cover-letter",
+        action: "download",
 
         format,
 
@@ -1289,6 +1298,7 @@ ${
           <JobDetailsForm
             formData={formData}
             onInputChange={handleInputChange}
+            aiTone={aiTone}
           />
         );
 
@@ -1297,6 +1307,8 @@ ${
           <BodyContentForm
             formData={formData}
             onInputChange={handleInputChange}
+            aiTone={aiTone}
+            onToneChange={setAiTone}
           />
         );
 
@@ -1681,8 +1693,7 @@ ${
                 <button
                   onClick={() => {
                     setShowCompletionPopup(false);
-                    // Navigate to templates or download
-                    // For cover letter, we can show a success message or navigate to download
+                    exportToPDF();
                   }}
                   className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
