@@ -77,8 +77,7 @@ public class AuthService {
             // User notification
             Notification userNotification = new Notification();
             userNotification.setType("FIRST_LOGIN");
-            // Avoid emoji here to prevent MySQL charset/collation issues on some setups.
-            userNotification.setMessage("Welcome to UptoSkills AI Resume Builder!");
+            userNotification.setMessage("Welcome to UptoSkills AI Resume Builder 🎉");
             userNotification.setUser(user);
             userNotification.setActor(Notification.Actor.SYSTEM);
             notificationRepository.save(userNotification);
