@@ -238,7 +238,7 @@ const CVBuilder = () => {
 
       const html = container.innerHTML;
 
-      await saveRecentActivity(html, "visited");
+      await saveRecentActivity(html, "edited");
 
       document.body.removeChild(container);
     };
@@ -291,6 +291,7 @@ const CVBuilder = () => {
       await axiosInstance.post("/api/downloads", {
         name: `cv_${nameToUse}`,
         type: "cv",
+        action: "download",
         format,
         html,
         template: selectedTemplate,
@@ -953,7 +954,7 @@ const CVBuilder = () => {
       case "projects":
         return formData?.projects && formData.projects.length > 0;
       case "certifications":
-        return formData?.certifications && formData.certifications.length > 0;
+        return true; // optional
       default:
         return true;
     }
@@ -972,7 +973,7 @@ const CVBuilder = () => {
       case "projects":
         return "At least one project is required";
       case "certifications":
-        return "At least one certification is required";
+        return "";
       default:
         return "";
     }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bot, SendHorizontal, Trash2, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import axiosInstance from "./../api/axios";
+import { aiService } from "../services/aiService";
 import chatbotIcon from "../assets/chatbot_image.png";
 
 export default function Aichat() {
@@ -23,6 +23,7 @@ export default function Aichat() {
   });
   const [input, setInput] = useState("");
   const [responseLoading, setResponseLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
 
   const chatbotBtnRef = useRef(null);
   const chatbotContainerRef = useRef(null);
@@ -89,18 +90,17 @@ export default function Aichat() {
     setMessages((prev) => [...prev, { from: "user", text }]);
     setInput("");
     setResponseLoading(true);
+    setChatError("");
 
     try {
-      const res = await axiosInstance.post("/api/chatbot/chat", {
+      const reply = await aiService.chat({
         message: text,
         prevMsg: messages,
         isLoggedIn,
+        currentPage: window.location.pathname,
       });
       // add an empty bot message that we'll fill in one char at a time
       setMessages((prev) => [...prev, { from: "bot", text: "" }]);
-      console.log(res);
-
-      const reply = res.data;
       let idx = 0;
       const typingInterval = setInterval(() => {
         idx += 1;
@@ -127,6 +127,7 @@ export default function Aichat() {
           text: "Something went wrong! Please try again later.",
         },
       ]);
+      setChatError("Unable to generate content, please try again.");
     }
 
     setResponseLoading(false);
@@ -303,6 +304,11 @@ export default function Aichat() {
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:120ms]"></span>
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:240ms]"></span>
               </div>
+            </div>
+          )}
+          {chatError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+              {chatError}
             </div>
           )}
         </div>

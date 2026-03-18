@@ -1,39 +1,62 @@
 import { useState } from "react";
 import { Sparkles, RefreshCw, Copy, Check, FileText } from "lucide-react";
-import axiosInstance from "./../../../../api/axios";
+import { aiService } from "../../../../services/aiService";
 
-const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
+const BodyContentForm = ({ formData, onInputChange, aiTone, onToneChange }) => {
   const [generating, setGenerating] = useState({});
   const [copied, setCopied] = useState({});
+  const [aiError, setAiError] = useState("");
 
   const handleGenerate = async (field) => {
     setGenerating((prev) => ({ ...prev, [field]: true }));
 
     try {
-      // axiosInstance uses withCredentials:true — the JWT cookie is sent automatically.
-      // Do NOT set Authorization manually; localStorage may not hold the token.
-      const response = await axiosInstance.post(
-        "/api/resume/cover-letter/generate",
-        {
-          sectionType: field,
-          jobDetails: {
-            jobTitle: formData.jobTitle || "Role",
-            companyName: formData.companyName || "Company",
-            fullName: formData.fullName || "Candidate",
-            skills: formData.skills || "",
-            experience: formData.experience || "",
-          },
-        },
-      );
+      setAiError("");
+      const response = await aiService.generateCoverLetter({
+        sectionType: field,
+        tone: aiTone,
+        jobTitle: formData.jobTitle || "Role",
+        companyName: formData.companyName || "Company",
+        recipientName: formData.recipientName,
+        fullName: formData.fullName || "Candidate",
+        skills: formData.skills || "",
+        experience: formData.experience || "",
+        jobDescription: formData.jobDescription || "",
+      });
 
-      // Java ApiResponse wraps the value in .data, not .result
-      const generated = response.data?.data || response.data?.result || "";
-      onInputChange(field, generated);
+      onInputChange(field, response?.[field] || "");
     } catch (error) {
       console.error("Error generating content:", error);
-      alert("Failed to generate content. Please try again.");
+      setAiError(aiService.getErrorMessage(error));
     } finally {
       setGenerating((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleGenerateFullLetter = async () => {
+    setGenerating((prev) => ({ ...prev, fullLetter: true }));
+
+    try {
+      setAiError("");
+      const response = await aiService.generateCoverLetter({
+        tone: aiTone,
+        jobTitle: formData.jobTitle || "Role",
+        companyName: formData.companyName || "Company",
+        recipientName: formData.recipientName,
+        fullName: formData.fullName || "Candidate",
+        skills: formData.skills || "",
+        experience: formData.experience || "",
+        jobDescription: formData.jobDescription || "",
+      });
+
+      onInputChange("openingParagraph", response?.openingParagraph || "");
+      onInputChange("bodyParagraph1", response?.bodyParagraph1 || "");
+      onInputChange("bodyParagraph2", response?.bodyParagraph2 || "");
+      onInputChange("closingParagraph", response?.closingParagraph || "");
+    } catch (error) {
+      setAiError(aiService.getErrorMessage(error));
+    } finally {
+      setGenerating((prev) => ({ ...prev, fullLetter: false }));
     }
   };
 
@@ -99,11 +122,46 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
       </p>
 
       <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg mb-6 text-sm">
-        <span className="text-lg leading-none">💡</span>
+        <span className="text-lg leading-none">Idea</span>
         <div className="text-slate-700">
           <strong>Pro Tip:</strong> A great cover letter has 3-4 paragraphs: an
           engaging opening, 1-2 body paragraphs highlighting your relevant
           experience, and a strong closing.
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-semibold text-slate-700">Tone</label>
+            <select
+              value={aiTone}
+              onChange={(e) => onToneChange(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+            >
+              <option value="professional">Professional</option>
+              <option value="formal">Formal</option>
+              <option value="creative">Creative</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={handleGenerateFullLetter}
+            disabled={generating.fullLetter}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {generating.fullLetter ? (
+              <>
+                <RefreshCw size={14} className="animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles size={14} />
+                Generate Full Letter
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -124,7 +182,7 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
       {renderTextArea(
         "bodyParagraph2",
         "Body Paragraph 2 - Additional Value (Optional)",
-        "Add more relevant skills, experiences, or explain why you're passionate about the company/industry...",
+        "Add more relevant skills, experiences, or explain why you're passionate about the company or industry...",
         5,
       )}
 
@@ -137,7 +195,7 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
 
       <div className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg text-sm text-slate-500 border border-slate-100">
         <span>
-          📊 Total Words:{" "}
+          Total Words:{" "}
           {
             [
               formData.openingParagraph,
@@ -153,6 +211,7 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
         </span>
         <span className="text-blue-600 font-medium">Ideal: 250-400 words</span>
       </div>
+      {aiError && <p className="mt-3 text-xs text-red-500 font-medium">{aiError}</p>}
     </div>
   );
 };

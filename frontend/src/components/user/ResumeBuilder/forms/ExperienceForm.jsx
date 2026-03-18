@@ -9,11 +9,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { getCompletionStatus } from "./../completion";
-import axiosInstance from "../../../../api/axios";
+import { aiService } from "../../../../services/aiService";
 
 const ExperienceForm = ({ formData, setFormData }) => {
   const [editingId, setEditingId] = useState(null);
   const [generatingId, setGeneratingId] = useState(null);
+  const [aiError, setAiError] = useState("");
   // initial load effect
   useEffect(() => {
     const { sectionValidationStatus } = getCompletionStatus(formData);
@@ -84,6 +85,7 @@ const ExperienceForm = ({ formData, setFormData }) => {
   const handleAIEnhance = async (id) => {
     try {
       setGeneratingId(id);
+      setAiError("");
       // Convert experience and projects objects to strings
       const experienceStr = formData.experience.find((e) => e.id === id);
       const data = {
@@ -96,29 +98,17 @@ const ExperienceForm = ({ formData, setFormData }) => {
       };
 
       if (!data.title || !data.company || !data.startDate || !data.endDate) {
-        alert(
-          "Please fill in the Job Title, Company, Start Date, and End Date fields before enhancing with AI.",
+        setAiError(
+          "Please fill in the job title, company, start date, and end date before using AI.",
         );
         setGeneratingId(null);
         return;
       }
-      console.log("Data sent:", data);
-
-      const response = await axiosInstance.post(
-        "/api/resume/enhance-work-experience",
-        data,
-      );
-      console.log("Response received:", response);
-      console.log("Description generated:", response.data.aiResume);
-      console.log("Updating experience with ID:", id);
-      console.log("Updating experience with data:", formData.experience);
-      updateExperience(id, "description", response.data.aiResume);
+      const enhancedDescription = await aiService.enhanceResumeExperience(data);
+      updateExperience(id, "description", enhancedDescription);
     } catch (error) {
       console.error("Failed to generate description:", error);
-      console.error("Error details:", error.response?.data || error.message);
-      alert(
-        `Failed to generate description: ${error.response?.data?.error || error.message}`,
-      );
+      setAiError(aiService.getErrorMessage(error));
     } finally {
       setGeneratingId(null);
     }
@@ -190,7 +180,9 @@ const ExperienceForm = ({ formData, setFormData }) => {
               <div className="p-3 animate-in fade-in duration-300">
                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
                   <Briefcase className="text-blue-600" size={18} />
-                  <h4 className="font-semibold text-slate-800">Edit Experience</h4>
+                  <h4 className="font-semibold text-slate-800">
+                    Edit Experience
+                  </h4>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4 pr-1">
@@ -279,6 +271,11 @@ const ExperienceForm = ({ formData, setFormData }) => {
                   <span className="ml-1 mt-1 text-xs text-slate-400 font-medium self-end">
                     {exp.description?.length || 0} / 500 Characters
                   </span>
+                  {aiError && (
+                    <p className="text-xs text-red-500 font-medium">
+                      {aiError}
+                    </p>
+                  )}
                 </div>
                 {/* Done Button */}
                 <div className="flex justify-end items-center gap-2 px-2 py-4">

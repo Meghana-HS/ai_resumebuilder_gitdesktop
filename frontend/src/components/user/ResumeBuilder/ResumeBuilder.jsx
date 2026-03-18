@@ -158,6 +158,53 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const [isPreviewHidden, setIsPreviewHidden] = useState(false);
 
+  /* -------------------- ACTIVITY LOGGING -------------------- */
+  const logActivity = async (action = "visited", html = "") => {
+    try {
+      const sanitize = (s) =>
+        (s || "")
+          .replace(/[^a-z0-9 _-]/gi, "")
+          .trim()
+          .replace(/\s+/g, "_");
+      const nameToUse =
+        sanitize(documentTitle) || sanitize(formData.fullName) || "Resume";
+      await axiosInstance.post("/api/downloads", {
+        name: `resume_${nameToUse}`,
+        type: "resume",
+        action,
+        format: "PDF",
+        html,
+        template: selectedTemplate,
+        size: "250 KB",
+      });
+    } catch (err) {
+      console.error("Failed to log resume activity:", err);
+    }
+  };
+
+  // first visit
+  useEffect(() => {
+    if (sessionStorage.getItem("resume-builder-visited")) return;
+    const timer = setTimeout(() => {
+      logActivity("visited");
+      sessionStorage.setItem("resume-builder-visited", "true");
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // edited (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => logActivity("edited"), 4000);
+    return () => clearTimeout(timer);
+  }, [formData, selectedTemplate]);
+
+  // preview open
+  useEffect(() => {
+    if (isPreviewExpanded || showMobilePreview) {
+      logActivity("preview");
+    }
+  }, [isPreviewExpanded, showMobilePreview]);
+
   /* -------------------- HELPERS -------------------- */
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -206,7 +253,11 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
         return formData?.education && formData.education.length > 0;
 
       case "skills":
-        return formData?.skills && formData.skills.length > 0;
+        return (
+          (formData?.skills?.technical?.length ?? 0) > 0 ||
+          (formData?.skills?.soft?.length ?? 0) > 0 ||
+          (Array.isArray(formData?.skills) && formData.skills.length > 0)
+        );
 
       case "projects":
         return formData?.projects && formData.projects.length > 0;
@@ -388,6 +439,7 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
         await axiosInstance.post("/api/downloads", {
           name: `resume_${nameToUse}`,
           type: "resume",
+          action: "download",
           format: "PDF",
           html: capturedHtml,
           template: selectedTemplate,
@@ -444,6 +496,7 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
         await axiosInstance.post("/api/downloads", {
           name: filename,
           type: "resume",
+          action: "download",
           format: "DOCX",
           html: bodyHtml,
           template: selectedTemplate,
