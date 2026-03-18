@@ -50,7 +50,7 @@ const AboutUs = () => {
   >
 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl pt-10 pb-4 md:pb-6 font-extrabold leading-tight text-slate-900">
   <span className="whitespace-nowrap">AI Resume Builder</span> by{" "}
-  <span className="text-blue-600">UptoSkills</span>
+  <span className="text-blue-600">Chinnima</span>
 </h1>
 
 
