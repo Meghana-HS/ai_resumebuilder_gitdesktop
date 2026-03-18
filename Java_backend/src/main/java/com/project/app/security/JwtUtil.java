@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -14,8 +15,29 @@ public class JwtUtil {
     @Value("${jwt.secret:mySecretKey}")
     private String jwtSecret;
 
+    /**
+     * Fallback key used when jwt.secret is missing/too short.
+     * This keeps the app functional in development, but tokens will change on restart.
+     */
+    private volatile SecretKey fallbackKey;
+
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        byte[] keyBytes = (jwtSecret == null) ? new byte[0] : jwtSecret.getBytes(StandardCharsets.UTF_8);
+
+        // HS256 requires a 256-bit (32 byte) key minimum.
+        if (keyBytes.length < 32) {
+            SecretKey existing = this.fallbackKey;
+            if (existing != null) return existing;
+
+            synchronized (this) {
+                if (this.fallbackKey == null) {
+                    this.fallbackKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+                }
+                return this.fallbackKey;
+            }
+        }
+
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(Long userId, Boolean isAdmin, Boolean rememberMe) {

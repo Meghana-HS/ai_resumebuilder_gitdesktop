@@ -32,6 +32,7 @@ import mergeWithSampleData, {
 } from "../../../utils/Datahelpers";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { exportDocxFromElement } from "../../../utils/exportDocx";
 /* ─── constants ─────────────────────────────────────────────────────────── */
 const CV_WIDTH = 794;
 const ZOOM_STEP = 0.1;
@@ -340,6 +341,43 @@ const CVPreview = ({
     }
   };
 
+  const downloadWord = async () => {
+    const TemplateComponent = CVTemplates[selectedTemplate];
+    if (!TemplateComponent) return;
+
+    let container;
+    try {
+      container = document.createElement("div");
+      Object.assign(container.style, {
+        position: "fixed",
+        top: "0",
+        left: "-9999px",
+        width: `${CV_WIDTH}px`,
+        background: "#ffffff",
+        zIndex: "-1",
+      });
+
+      document.body.appendChild(container);
+
+      const { createRoot } = await import("react-dom/client");
+
+      await new Promise((resolve) => {
+        const root = createRoot(container);
+        root.render(<TemplateComponent formData={displayData} />);
+        setTimeout(resolve, 400);
+      });
+
+      await exportDocxFromElement({
+        element: container,
+        title: `${displayData?.fullName || "CV"}_${selectedTemplate || "Template"}`,
+      });
+    } catch (err) {
+      console.error("Word download error:", err);
+    } finally {
+      if (container && container.parentNode) document.body.removeChild(container);
+    }
+  };
+
   /* ── auto-fit ─────────────────────────────────────────────────────────── */
   useLayoutEffect(() => {
     if (!containerRef.current) return;
@@ -578,6 +616,9 @@ const CVPreview = ({
 
             <IconBtn onClick={downloadPDF} title="Download PDF">
               <Download size={14} />
+            </IconBtn>
+            <IconBtn onClick={downloadWord} title="Download Word (.docx)">
+              <FileText size={14} />
             </IconBtn>
             <Divider />
           </>
