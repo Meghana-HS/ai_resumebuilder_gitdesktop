@@ -1,25 +1,9 @@
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
-import { aiService } from "../../../../services/aiService";
 
 const SkillsForm = ({ formData, setFormData }) => {
   const [newSkill, setNewSkill] = useState("");
   const [skillType, setSkillType] = useState("technical");
-  const [suggestedSkills, setSuggestedSkills] = useState({
-    technicalSkills: [
-      "JavaScript",
-      "React.js",
-      "Node.js",
-      "Python",
-      "SQL",
-      "AWS",
-    ],
-    softSkills: ["Leadership", "Communication", "Teamwork", "Problem Solving"],
-    keywords: [],
-    atsTips: [],
-  });
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [aiError, setAiError] = useState("");
 
   const addSkill = () => {
     if (newSkill.trim()) {
@@ -56,41 +40,10 @@ const SkillsForm = ({ formData, setFormData }) => {
     }
   };
 
-  const visibleSuggestedSkills =
+  const suggestedSkills =
     skillType === "technical"
-      ? suggestedSkills.technicalSkills
-      : suggestedSkills.softSkills;
-
-  const loadAiSuggestions = async () => {
-    try {
-      setIsLoadingSuggestions(true);
-      setAiError("");
-      const response = await aiService.suggestResumeSkills({
-        fullName: formData?.fullName,
-        summary: formData?.summary,
-        jobTitle: formData?.targetRole,
-        skills: formData?.skills,
-        experience: formData?.experience,
-        projects: formData?.projects,
-      });
-      setSuggestedSkills((prev) => ({
-        technicalSkills:
-          response?.technicalSkills?.length > 0
-            ? response.technicalSkills
-            : prev.technicalSkills,
-        softSkills:
-          response?.softSkills?.length > 0
-            ? response.softSkills
-            : prev.softSkills,
-        keywords: response?.keywords ?? [],
-        atsTips: response?.atsTips ?? [],
-      }));
-    } catch (error) {
-      setAiError(aiService.getErrorMessage(error));
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
-  };
+      ? ["JavaScript", "React.js", "Node.js", "Python", "SQL", "AWS"]
+      : ["Leadership", "Communication", "Teamwork", "Problem Solving"];
 
   return (
     <div className="flex flex-col gap-0.5">
@@ -98,11 +51,10 @@ const SkillsForm = ({ formData, setFormData }) => {
         <button
           onClick={() => setSkillType("technical")}
           className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-300
-      ${
-        skillType === "technical"
-          ? "bg-white text-slate-900 shadow-md scale-105"
-          : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-      }`}
+      ${skillType === "technical"
+              ? "bg-white text-slate-900 shadow-md scale-105"
+              : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+            }`}
         >
           Technical Skills
         </button>
@@ -110,11 +62,10 @@ const SkillsForm = ({ formData, setFormData }) => {
         <button
           onClick={() => setSkillType("soft")}
           className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-300
-      ${
-        skillType === "soft"
-          ? "bg-white text-slate-900 shadow-md scale-105"
-          : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-      }`}
+      ${skillType === "soft"
+              ? "bg-white text-slate-900 shadow-md scale-105"
+              : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+            }`}
         >
           Soft Skills
         </button>
@@ -165,33 +116,20 @@ const SkillsForm = ({ formData, setFormData }) => {
       </div>
 
       <div className="w-full">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-medium text-slate-700">
-            Suggested {skillType} skills:
-          </p>
-          <button
-            type="button"
-            onClick={loadAiSuggestions}
-            disabled={isLoadingSuggestions}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            {isLoadingSuggestions ? "Loading..." : "Suggest with AI"}
-          </button>
-        </div>
+        <p className="text-sm font-medium text-slate-700 mb-3">
+          Suggested {skillType} skills:
+        </p>
         <div className="flex flex-wrap gap-2">
-          {visibleSuggestedSkills.map((skill, idx) => {
-            const isAdded = (formData?.skills?.[skillType] ?? []).includes(
-              skill,
-            );
+          {suggestedSkills.map((skill, idx) => {
+            const isAdded = (formData?.skills?.[skillType] ?? []).includes(skill);
             return (
               <button
                 key={idx}
                 disabled={isAdded}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-all ${
-                  isAdded
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-all ${isAdded
                     ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
                     : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                }`}
+                  }`}
                 onClick={() => addSuggestedSkill(skill)}
               >
                 {!isAdded && <Plus size={14} className="text-slate-400" />}
@@ -200,36 +138,6 @@ const SkillsForm = ({ formData, setFormData }) => {
             );
           })}
         </div>
-        {suggestedSkills.keywords?.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm font-medium text-slate-700 mb-2">
-              ATS keywords
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {suggestedSkills.keywords.map((keyword) => (
-                <span
-                  key={keyword}
-                  className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700"
-                >
-                  {keyword}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {suggestedSkills.atsTips?.length > 0 && (
-          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <p className="text-sm font-medium text-slate-700 mb-2">ATS tips</p>
-            <ul className="list-disc pl-5 text-xs text-slate-600">
-              {suggestedSkills.atsTips.map((tip) => (
-                <li key={tip}>{tip}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {aiError && (
-          <p className="mt-3 text-xs text-red-500 font-medium">{aiError}</p>
-        )}
       </div>
     </div>
   );

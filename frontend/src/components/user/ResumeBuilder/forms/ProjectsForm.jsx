@@ -8,7 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { getCompletionStatus } from "../completion";
-import { aiService } from "../../../../services/aiService";
+import axiosInstance from "../../../../api/axios";
 
 const ProjectsForm = ({ formData, setFormData }) => {
   const [editingId, setEditingId] = useState(null);
@@ -18,7 +18,7 @@ const ProjectsForm = ({ formData, setFormData }) => {
     if (sectionValidationStatus.hasValidProject) {
       setEditingId(null);
     } else {
-      setEditingId(formData?.projects?.[0]?.id ?? null);
+      setEditingId((formData?.projects?.[0]?.id) ?? null);
     }
   }, [formData]);
 
@@ -78,11 +78,21 @@ const ProjectsForm = ({ formData, setFormData }) => {
       }
       console.log("Data sent:", data);
 
-      const enhanced = await aiService.enhanceProjectDescription(data);
-      updateProject(projectId, "description", enhanced);
+      const response = await axiosInstance.post(
+        "/api/resume/enhance-project-description",
+        data,
+      );
+      console.log("Response received:", response);
+      console.log("Description generated:", response.data.projectDescription);
+      console.log("Updating project with ID:", projectId);
+      console.log("Updating project with data:", formData.projects);
+      updateProject(projectId, "description", response.data.projectDescription);
     } catch (error) {
       console.error("Failed to generate description:", error);
-      alert(aiService.getErrorMessage(error));
+      console.error("Error details:", error.response?.data || error.message);
+      alert(
+        `Failed to generate description: ${error.response?.data?.error || error.message}`,
+      );
     } finally {
       setGeneratingId(null);
     }
@@ -168,9 +178,7 @@ const ProjectsForm = ({ formData, setFormData }) => {
                       className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all bg-white"
                       value={project.name || ""}
                       placeholder="E-commerce Platform"
-                      onChange={(e) =>
-                        updateProject(project.id, "name", e.target.value)
-                      }
+                      onChange={(e) => updateProject(project.id, "name", e.target.value)}
                     />
                   </div>
 
@@ -183,13 +191,7 @@ const ProjectsForm = ({ formData, setFormData }) => {
                       className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all bg-white"
                       value={project.technologies || ""}
                       placeholder="React, Node.js, MongoDB"
-                      onChange={(e) =>
-                        updateProject(
-                          project.id,
-                          "technologies",
-                          e.target.value,
-                        )
-                      }
+                      onChange={(e) => updateProject(project.id, "technologies", e.target.value)}
                     />
                   </div>
 
@@ -203,10 +205,7 @@ const ProjectsForm = ({ formData, setFormData }) => {
                         onClick={() => generateProjectDetails(project.id)}
                       >
                         {generatingId === project.id ? (
-                          <RefreshCw
-                            size={15}
-                            className={`ml-1 animate-spin`}
-                          />
+                          <RefreshCw size={15} className={`ml-1 animate-spin`} />
                         ) : (
                           <Sparkles size={14} />
                         )}
@@ -217,9 +216,7 @@ const ProjectsForm = ({ formData, setFormData }) => {
                       className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all bg-white resize-y min-h-[140px] leading-relaxed"
                       value={project.description || ""}
                       maxLength={500}
-                      onChange={(e) =>
-                        updateProject(project.id, "description", e.target.value)
-                      }
+                      onChange={(e) => updateProject(project.id, "description", e.target.value)}
                       placeholder="Describe your project's features and your contributions..."
                     />
                     <span className="ml-1 mt-1 text-xs text-slate-400 font-medium self-end">
@@ -229,10 +226,7 @@ const ProjectsForm = ({ formData, setFormData }) => {
 
                   <div className="flex flex-col gap-1.5 md:col-span-2 mt-2">
                     <label className="text-sm font-semibold text-slate-700">
-                      GitHub Link{" "}
-                      <span className="text-slate-400 font-normal">
-                        (Optional)
-                      </span>
+                      GitHub Link <span className="text-slate-400 font-normal">(Optional)</span>
                     </label>
                     <input
                       type="text"
@@ -240,17 +234,16 @@ const ProjectsForm = ({ formData, setFormData }) => {
                       value={project?.link?.github || ""}
                       placeholder="https://github.com/yourusername/project"
                       onChange={(e) => {
-                        const updated = (formData?.projects ?? []).map(
-                          (item) =>
-                            item.id === project.id
-                              ? {
-                                  ...item,
-                                  link: {
-                                    ...item.link,
-                                    github: e.target.value,
-                                  },
-                                }
-                              : item,
+                        const updated = (formData?.projects ?? []).map((item) =>
+                          item.id === project.id
+                            ? {
+                                ...item,
+                                link: {
+                                  ...item.link,
+                                  github: e.target.value,
+                                },
+                              }
+                            : item,
                         );
                         setFormData((prev) => ({
                           ...prev,

@@ -5,8 +5,10 @@ export const getCompletionStatus = (formData) => {
   const hasPersonalInfo =
     formData?.fullName?.trim() &&
     formData?.email?.trim() &&
+    formData?.linkedin?.trim() &&
     formData?.location?.trim() &&
-    formData?.phone?.trim();
+    formData?.phone?.trim() &&
+    formData?.website?.trim();
 
   if (!hasPersonalInfo) missing.push("Personal");
 
@@ -19,7 +21,8 @@ export const getCompletionStatus = (formData) => {
         exp.title?.trim() &&
         exp.company?.trim() &&
         exp.description?.trim() &&
-        exp.startDate?.trim(),
+        exp.startDate?.trim() &&
+        exp.endDate?.trim(),
     );
 
   if (!hasValidExperience) {
@@ -47,7 +50,15 @@ export const getCompletionStatus = (formData) => {
     Array.isArray(formData?.projects) &&
     formData.projects.length > 0 &&
     formData.projects.every(
-      (project) => project.name?.trim() && project.description?.trim(),
+      (project) =>
+        project.name?.trim() &&
+        project.description?.trim() &&
+        project.technologies?.trim() &&
+        (typeof project.link === 'string' ? project.link.trim() : (
+          project.link?.github?.trim() ||
+          project.link?.liveLink?.trim() ||
+          project.link?.other?.trim()
+        )),
     );
 
   if (!hasValidProject) {
@@ -56,8 +67,8 @@ export const getCompletionStatus = (formData) => {
 
   /* ---------- Certification INFO ---------- */
   const hasValidCertificationInfo =
-    !Array.isArray(formData?.certifications) ||
-    formData.certifications.length === 0 ||
+    Array.isArray(formData?.certifications) &&
+    formData.certifications.length > 0 &&
     formData.certifications.every(
       (cert) => cert.name?.trim() && cert.issuer?.trim() && cert.date?.trim(),
     );
@@ -69,8 +80,7 @@ export const getCompletionStatus = (formData) => {
   /* ---------- SKILLS ---------- */
   const hasSkills =
     (formData?.skills?.technical?.length ?? 0) > 0 ||
-    (formData?.skills?.soft?.length ?? 0) > 0 ||
-    (Array.isArray(formData?.skills) && formData.skills.length > 0);
+    (formData?.skills?.soft?.length ?? 0) > 0;
 
   if (!hasSkills) missing.push("Skills");
 
