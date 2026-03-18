@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { RefreshCw, Sparkles, User } from "lucide-react";
-import { aiService } from "../../../../services/aiService";
+import axiosInstance from "../../../../api/axios";
 
 const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
-  const [aiError, setAiError] = useState("");
+
 
   const autoGenerateSummary = async () => {
     try {
       setIsGenerating(true);
-      setAiError("");
       // Convert experience and projects objects to strings
       const data = {
         fullName: formData.fullName,
@@ -22,11 +21,19 @@ const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
         projects: formData.projects,
         summary: formData.summary,
       };
-      const summary = await aiService.generateResumeSummary(data);
-      onInputChange("summary", summary);
+      const response = await axiosInstance.post(
+        "/api/resume/generate-summary",
+        data,
+      );
+      // console.log("Response received:", response);
+      // console.log("Summary generated:", response.data.aiResume);
+      onInputChange("summary", response.data.aiResume);
     } catch (error) {
       console.error("Failed to generate summary:", error);
-      setAiError(aiService.getErrorMessage(error));
+      console.error("Error details:", error.response?.data || error.message);
+      alert(
+        `Failed to generate summary: ${error.response?.data?.error || error.message}`,
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -45,10 +52,10 @@ const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
 
   const handlePhoneChange = (e) => {
     const val = e.target.value;
-    const cleanVal = val.replace(/[^0-9+]/g, "");
+    const cleanVal = val.replace(/[^0-9+]/g, '');
     onInputChange("phone", cleanVal);
 
-    if (cleanVal && cleanVal.replace(/[^0-9]/g, "").length < 10) {
+    if (cleanVal && cleanVal.replace(/[^0-9]/g, '').length < 10) {
       setPhoneError(true);
     } else {
       setPhoneError(false);
@@ -59,9 +66,7 @@ const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
     <div className="p-2 animate-in fade-in duration-300">
       <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
         <User className="text-blue-600" size={20} />
-        <h3 className="text-lg font-bold text-slate-800">
-          Personal Information
-        </h3>
+        <h3 className="text-lg font-bold text-slate-800">Personal Information</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
@@ -86,16 +91,12 @@ const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
           </label>
           <input
             type="email"
-            className={`w-full px-3.5 py-2.5 border rounded-lg text-sm text-slate-900 focus:outline-none transition-all bg-white ${emailError ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10" : "border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"}`}
+            className={`w-full px-3.5 py-2.5 border rounded-lg text-sm text-slate-900 focus:outline-none transition-all bg-white ${emailError ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' : 'border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10'}`}
             value={formData?.email || ""}
             placeholder="john.doe@example.com"
             onChange={handleEmailChange}
           />
-          {emailError && (
-            <span className="text-xs text-red-500 font-medium">
-              Please enter a valid email address
-            </span>
-          )}
+          {emailError && <span className="text-xs text-red-500 font-medium">Please enter a valid email address</span>}
         </div>
 
         {/* Phone */}
@@ -105,17 +106,13 @@ const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
           </label>
           <input
             type="tel"
-            className={`w-full px-3.5 py-2.5 border rounded-lg text-sm text-slate-900 focus:outline-none transition-all bg-white ${phoneError ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10" : "border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"}`}
+            className={`w-full px-3.5 py-2.5 border rounded-lg text-sm text-slate-900 focus:outline-none transition-all bg-white ${phoneError ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' : 'border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10'}`}
             value={formData?.phone || ""}
             maxLength={15}
             placeholder="1234567890"
             onChange={handlePhoneChange}
           />
-          {phoneError && (
-            <span className="text-xs text-red-500 font-medium">
-              Please enter a valid phone number
-            </span>
-          )}
+          {phoneError && <span className="text-xs text-red-500 font-medium">Please enter a valid phone number</span>}
         </div>
 
         {/* Location */}
@@ -163,8 +160,7 @@ const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
       <div className="flex flex-col gap-1.5 mt-6 mb-4">
         <div className="w-full flex items-center justify-between mb-1">
           <label className="text-sm font-semibold text-slate-700">
-            Professional Summary{" "}
-            <span className="text-slate-400 font-normal">(Optional)</span>
+            Professional Summary <span className="text-slate-400 font-normal">(Optional)</span>
           </label>
           <button
             className="flex gap-2 ml-2 p-2 rounded-lg text-xs bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-800"
@@ -190,9 +186,6 @@ const PersonalInfoForm = ({ formData, onInputChange, onUseSummary }) => {
             {formData?.summary?.length || 0} / 500
           </span>
         </div>
-        {aiError && (
-          <p className="text-xs text-red-500 font-medium">{aiError}</p>
-        )}
       </div>
     </div>
   );
