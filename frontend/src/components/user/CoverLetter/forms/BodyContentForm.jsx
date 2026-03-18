@@ -10,7 +10,8 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
     setGenerating((prev) => ({ ...prev, [field]: true }));
 
     try {
-      const token = localStorage.getItem("token");
+      // axiosInstance uses withCredentials:true — the JWT cookie is sent automatically.
+      // Do NOT set Authorization manually; localStorage may not hold the token.
       const response = await axiosInstance.post(
         "/api/resume/cover-letter/generate",
         {
@@ -23,18 +24,14 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
             experience: formData.experience || "",
           },
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
 
-      onInputChange(field, response.data.result);
+      // Java ApiResponse wraps the value in .data, not .result
+      const generated = response.data?.data || response.data?.result || "";
+      onInputChange(field, generated);
     } catch (error) {
       console.error("Error generating content:", error);
-      alert("Error processing request.");
+      alert("Failed to generate content. Please try again.");
     } finally {
       setGenerating((prev) => ({ ...prev, [field]: false }));
     }
@@ -71,7 +68,11 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
             onClick={() => handleCopy(field)}
             disabled={!formData[field]}
           >
-            {copied[field] ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+            {copied[field] ? (
+              <Check size={14} className="text-green-500" />
+            ) : (
+              <Copy size={14} />
+            )}
           </button>
         </div>
       </div>
@@ -93,7 +94,8 @@ const BodyContentForm = ({ formData, onInputChange, onAIGenerate }) => {
       </div>
 
       <p className="text-sm text-slate-500 mb-4">
-        Write your cover letter content below or use AI to generate compelling paragraphs.
+        Write your cover letter content below or use AI to generate compelling
+        paragraphs.
       </p>
 
       <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg mb-6 text-sm">

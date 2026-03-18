@@ -1,17 +1,11 @@
 package com.project.app.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "users")
 public class User {
@@ -71,6 +65,34 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    // Constructors
+    public User() {}
+    
+    public User(Long id, String username, String email, String password, Boolean isAdmin, 
+                AdminRequestStatus adminRequestStatus, Boolean isActive, String plan, 
+                LocalDateTime lastLogin, String fullName, String phone, String location, 
+                String bio, String github, String linkedin, Integer profileViews, 
+                LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.isAdmin = isAdmin;
+        this.adminRequestStatus = adminRequestStatus;
+        this.isActive = isActive;
+        this.plan = plan;
+        this.lastLogin = lastLogin;
+        this.fullName = fullName;
+        this.phone = phone;
+        this.location = location;
+        this.bio = bio;
+        this.github = github;
+        this.linkedin = linkedin;
+        this.profileViews = profileViews;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
     
     // Manual getters/setters to fix compilation issues
     public Long getId() { return id; }

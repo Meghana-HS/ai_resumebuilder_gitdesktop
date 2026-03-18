@@ -1,16 +1,25 @@
 package com.project.app.dto;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+
+
+
+
+
+
 public class ApiResponse<T> {
     private Boolean success;
     private String message;
     private T data;
+    
+    // Constructors
+    public ApiResponse() {}
+    
+    public ApiResponse(Boolean success, String message, T data) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+    }
     
     // Manual getters/setters to fix compilation issues
     public Boolean getSuccess() { return success; }

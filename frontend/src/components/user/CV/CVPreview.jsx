@@ -32,6 +32,7 @@ import mergeWithSampleData, {
 } from "../../../utils/Datahelpers";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { generateResumeDocx } from "../../../utils/generateDocx";
 /* ─── constants ─────────────────────────────────────────────────────────── */
 const CV_WIDTH = 794;
 const ZOOM_STEP = 0.1;
@@ -191,29 +192,46 @@ const CVPreview = ({
   const TemplateComponent = CVTemplates[selectedTemplate];
   /* ─── helpers: detect if user entered optional sections ───────────────── */
   const hasUserEnteredExperience = useMemo(() => {
-    return formData?.experience?.some(exp =>
-      exp?.company?.trim() || exp?.position?.trim() || exp?.description?.trim()
+    return formData?.experience?.some(
+      (exp) =>
+        exp?.company?.trim() ||
+        exp?.position?.trim() ||
+        exp?.description?.trim(),
     );
   }, [formData?.experience]);
 
   const hasUserEnteredEducation = useMemo(() => {
-    return formData?.education?.some(edu =>
-      edu?.school?.trim() || edu?.degree?.trim() || edu?.field?.trim() || edu?.year?.trim()
+    return formData?.education?.some(
+      (edu) =>
+        edu?.school?.trim() ||
+        edu?.degree?.trim() ||
+        edu?.field?.trim() ||
+        edu?.year?.trim(),
     );
   }, [formData?.education]);
 
   const hasUserEnteredProjects = useMemo(() => {
-    return formData?.projects?.some(proj => {
-      const linkStr = typeof proj?.link === 'string'
-        ? proj.link
-        : (proj?.link?.github || proj?.link?.liveLink || proj?.link?.other || '');
-      return proj?.title?.trim() || proj?.name?.trim() || proj?.description?.trim() || linkStr?.trim();
+    return formData?.projects?.some((proj) => {
+      const linkStr =
+        typeof proj?.link === "string"
+          ? proj.link
+          : proj?.link?.github ||
+            proj?.link?.liveLink ||
+            proj?.link?.other ||
+            "";
+      return (
+        proj?.title?.trim() ||
+        proj?.name?.trim() ||
+        proj?.description?.trim() ||
+        linkStr?.trim()
+      );
     });
   }, [formData?.projects]);
 
   const hasUserEnteredCertifications = useMemo(() => {
-    return formData?.certifications?.some(cert =>
-      cert?.name?.trim() || cert?.issuer?.trim() || cert?.date?.trim()
+    return formData?.certifications?.some(
+      (cert) =>
+        cert?.name?.trim() || cert?.issuer?.trim() || cert?.date?.trim(),
     );
   }, [formData?.certifications]);
 
@@ -236,7 +254,13 @@ const CVPreview = ({
     }
 
     return merged;
-  }, [formData, hasUserEnteredExperience, hasUserEnteredEducation, hasUserEnteredProjects, hasUserEnteredCertifications]);
+  }, [
+    formData,
+    hasUserEnteredExperience,
+    hasUserEnteredEducation,
+    hasUserEnteredProjects,
+    hasUserEnteredCertifications,
+  ]);
   const isUserData = useMemo(() => hasAnyUserData(formData), [formData]);
   const previewRef = useRef(null);
 
@@ -336,7 +360,8 @@ const CVPreview = ({
     } catch (err) {
       console.error("PDF download error:", err);
     } finally {
-      if (container && container.parentNode) document.body.removeChild(container);
+      if (container && container.parentNode)
+        document.body.removeChild(container);
     }
   };
 

@@ -2,9 +2,9 @@ package com.project.app.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
-@Data
+
+
 public class ChangePasswordRequest {
     @NotBlank(message = "Old password is required")
     private String oldPassword;

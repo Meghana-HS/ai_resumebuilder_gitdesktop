@@ -96,7 +96,7 @@ const FloatingFormPanel = ({ children, topOffset, containerRef }) => {
   );
 };
 
-const ResumeBuilder = ({ setActivePage = () => { } }) => {
+const ResumeBuilder = ({ setActivePage = () => {} }) => {
   const headerRef = useRef(null);
   const leftColRef = useRef(null);
   const formContainerRef = useRef(null);
@@ -177,7 +177,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
       const statusInfo = getCompletionStatus(formData);
       setcompletion(statusInfo || {});
     } catch (error) {
-      console.error('Error getting completion status:', error);
+      console.error("Error getting completion status:", error);
       setcompletion({ isComplete: false, missingSections: [] });
     }
   }, [formData]);
@@ -248,7 +248,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
   const GenerateResumePDF = async (resumeHtml) => {
     try {
       setLoading(true);
-      
+
       // Create a temporary container to render the HTML
       const container = document.createElement("div");
       Object.assign(container.style, {
@@ -267,7 +267,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
       }
 
       const { createRoot } = await import("react-dom/client");
-      
+
       await new Promise((resolve) => {
         const root = createRoot(container);
         root.render(templateComponent({ data: formData }));
@@ -327,7 +327,8 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
           ?.replace(/[^a-z0-9_\- ]/gi, "")
           .trim()
           .replace(/\s+/g, "_");
-      const name = clean(documentTitle) || clean(formData?.fullName) || "Resume";
+      const name =
+        clean(documentTitle) || clean(formData?.fullName) || "Resume";
       pdf.save(`${name}.pdf`);
 
       document.body.removeChild(container);
@@ -384,7 +385,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
 
     try {
       const { createRoot } = await import("react-dom/client");
-      
+
       await new Promise((resolve) => {
         const root = createRoot(container);
         root.render(templateComponent({ data: formData }));
@@ -392,7 +393,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
       });
 
       const bodyHtml = container.innerHTML;
-      
+
       // Enhanced Word document with better CSS preservation
       const wordHtml = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -414,7 +415,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            
+
             /* Jessica Claire Template Styles - Word Optimized */
             .jessica-claire-template {
               font-family: 'Palatino Linotype', 'Georgia', serif;
@@ -569,7 +570,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
         </body>
         </html>
       `;
-      
+
       const blob = new Blob(["\uFEFF", wordHtml], {
         type: "application/msword",
       });
@@ -847,10 +848,15 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
                           goRight();
                         }
                       }}
-                      disabled={!completion?.isComplete && currentIdx === tabs.length - 1}
+                      disabled={
+                        !completion?.isComplete &&
+                        currentIdx === tabs.length - 1
+                      }
                       className="flex gap-2 items-center text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg select-none disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                     >
-                      <span className="hidden sm:inline">{completion?.isComplete ? "Finish" : "Next Step"}</span>
+                      <span className="hidden sm:inline">
+                        {completion?.isComplete ? "Finish" : "Next Step"}
+                      </span>
                       <ArrowRight size={16} />
                     </button>
                   </div>
@@ -906,7 +912,9 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
                       goRight();
                     }
                   }}
-                  disabled={!completion?.isComplete && currentIdx === tabs.length - 1}
+                  disabled={
+                    !completion?.isComplete && currentIdx === tabs.length - 1
+                  }
                   className="flex gap-2 items-center text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg select-none disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                 >
                   <span>{completion?.isComplete ? "Finish" : "Next"}</span>
@@ -962,7 +970,7 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
             formData={formData}
             currentTemplate={currentTemplate}
             isExpanded={true}
-            onExpand={() => { }}
+            onExpand={() => {}}
             onCollapse={() => setIsPreviewExpanded(false)}
             onMinimize={() => setIsPreviewHidden(true)}
           />
@@ -1051,8 +1059,8 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
                   formData={formData}
                   currentTemplate={currentTemplate}
                   isExpanded={false}
-                  onExpand={() => { }}
-                  onCollapse={() => { }}
+                  onExpand={() => {}}
+                  onCollapse={() => {}}
                   onMinimize={() => setShowMobilePreview(false)}
                 />
               </div>
@@ -1071,19 +1079,34 @@ const ResumeBuilder = ({ setActivePage = () => { } }) => {
           to   { transform: translateY(0);    opacity: 1;   }
         }
       `}</style>
-      
+
       {/* Completion Popup */}
       {showCompletionPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Resume Complete!</h3>
-              <p className="text-gray-600 mb-6">Your resume has been successfully completed with all required information. You can now download or preview your resume.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Resume Complete!
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Your resume has been successfully completed with all required
+                information. You can now download or preview your resume.
+              </p>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => setShowCompletionPopup(false)}

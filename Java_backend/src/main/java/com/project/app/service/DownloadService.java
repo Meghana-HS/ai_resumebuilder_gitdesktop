@@ -4,16 +4,15 @@ import com.project.app.entity.Download;
 import com.project.app.entity.User;
 import com.project.app.repository.DownloadRepository;
 import com.project.app.repository.UserRepository;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class DownloadService {
@@ -41,12 +40,24 @@ public class DownloadService {
         return downloadRepository.findByUserIdOrderByDownloadDateDesc(userId);
     }
 
-    public List<Download> getUserDownloadsByType(Long userId, Download.DocumentType type) {
-        return downloadRepository.findByUserIdAndTypeOrderByDownloadDateDesc(userId, type);
+    public List<Download> getUserDownloadsByType(
+        Long userId,
+        Download.DocumentType type
+    ) {
+        return downloadRepository.findByUserIdAndTypeOrderByDownloadDateDesc(
+            userId,
+            type
+        );
     }
 
-    public List<Download> getUserDownloadsByAction(Long userId, Download.Action action) {
-        return downloadRepository.findByUserIdAndActionOrderByDownloadDateDesc(userId, action);
+    public List<Download> getUserDownloadsByAction(
+        Long userId,
+        Download.Action action
+    ) {
+        return downloadRepository.findByUserIdAndActionOrderByDownloadDateDesc(
+            userId,
+            action
+        );
     }
 
     public List<Download> getRecentActivity(Long userId) {
@@ -54,8 +65,9 @@ public class DownloadService {
     }
 
     public Optional<Download> getDownloadById(Long id, Long userId) {
-        return downloadRepository.findById(id)
-                .filter(download -> download.getUser().getId().equals(userId));
+        return downloadRepository
+            .findById(id)
+            .filter(download -> download.getUser().getId().equals(userId));
     }
 
     public Download incrementViews(Long id, Long userId) {
@@ -79,20 +91,36 @@ public class DownloadService {
 
     public Map<String, Object> getDashboardSummary(Long userId) {
         Map<String, Object> summary = new HashMap<>();
-        
+
         // Total downloads
-        Long totalDownloads = downloadRepository.countByUserIdAndAction(userId, Download.Action.DOWNLOAD);
+        Long totalDownloads = downloadRepository.countByUserIdAndAction(
+            userId,
+            Download.Action.DOWNLOAD
+        );
         summary.put("totalDownloads", totalDownloads);
-        
+
         // Downloads by type
-        Long resumeDownloads = downloadRepository.countByUserIdAndTypeAndAction(userId, Download.DocumentType.RESUME, Download.Action.DOWNLOAD);
-        Long cvDownloads = downloadRepository.countByUserIdAndTypeAndAction(userId, Download.DocumentType.CV, Download.Action.DOWNLOAD);
-        Long coverLetterDownloads = downloadRepository.countByUserIdAndTypeAndAction(userId, Download.DocumentType.COVER_LETTER, Download.Action.DOWNLOAD);
-        
+        Long resumeDownloads = downloadRepository.countByUserIdAndTypeAndAction(
+            userId,
+            Download.DocumentType.RESUME,
+            Download.Action.DOWNLOAD
+        );
+        Long cvDownloads = downloadRepository.countByUserIdAndTypeAndAction(
+            userId,
+            Download.DocumentType.CV,
+            Download.Action.DOWNLOAD
+        );
+        Long coverLetterDownloads =
+            downloadRepository.countByUserIdAndTypeAndAction(
+                userId,
+                Download.DocumentType.COVER_LETTER,
+                Download.Action.DOWNLOAD
+            );
+
         summary.put("resumesCreated", resumeDownloads);
         summary.put("cvsCreated", cvDownloads);
         summary.put("coverLettersCreated", coverLetterDownloads);
-        
+
         // Last edited document
         List<Download> recentActivity = getRecentActivity(userId);
         if (!recentActivity.isEmpty()) {
@@ -102,12 +130,19 @@ public class DownloadService {
             lastEditedDoc.put("updatedAt", lastEdited.getUpdatedAt());
             summary.put("lastEditedDoc", lastEditedDoc);
         }
-        
+
         return summary;
     }
 
-    public Page<Download> getUserDownloadsPaginated(Long userId, int page, int size) {
+    public Page<Download> getUserDownloadsPaginated(
+        Long userId,
+        int page,
+        int size
+    ) {
         Pageable pageable = PageRequest.of(page, size);
-        return downloadRepository.findByUserIdOrderByDownloadDateDesc(userId, pageable);
+        return downloadRepository.findByUserIdOrderByDownloadDateDesc(
+            userId,
+            pageable
+        );
     }
 }

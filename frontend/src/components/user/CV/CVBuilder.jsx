@@ -79,7 +79,13 @@ const createEmptyResume = () => ({
   ],
   skills: { technical: [], soft: [] },
   projects: [
-    { id: generateId(), name: "", description: "", technologies: "", link: { github: "" } },
+    {
+      id: generateId(),
+      name: "",
+      description: "",
+      technologies: "",
+      link: { github: "" },
+    },
   ],
   certifications: [
     { id: generateId(), name: "", issuer: "", date: "", link: "" },
@@ -607,7 +613,7 @@ const CVBuilder = () => {
       file.type === "application/pdf" ||
       file.type === "application/msword" ||
       file.type ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       file.name.endsWith(".pdf") ||
       file.name.endsWith(".doc") ||
       file.name.endsWith(".docx");
@@ -625,51 +631,14 @@ const CVBuilder = () => {
       formData.append("jobTitle", "CV Builder Upload");
       formData.append("templateId", selectedTemplate || "professional");
 
-      // Try to get user ID from token or use a default
-      const token =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
+      // Use axiosInstance — already carries the JWT auth header and points to port 8081
+      const response = await axiosInstance.post(
+        "/api/resume/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
 
-      // Parse token to get user ID if available
-      let userId = null;
-      if (token) {
-        try {
-          const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-          userId = tokenPayload.id || tokenPayload.userId;
-        } catch (e) {
-          console.log("Could not parse user ID from token");
-        }
-      }
-
-      // Use user ID as resumeprofileId if available, otherwise use a default
-      if (userId) {
-        formData.append("resumeprofileId", userId);
-      } else {
-        // Use a default ObjectId format - this will need to be handled by backend
-        formData.append("resumeprofileId", "000000000000000000000000");
-      }
-
-      const res = await fetch("http://localhost:5000/api/resume/upload", {
-        method: "POST",
-        body: formData,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      const rawText = await res.text();
-
-      if (!res.ok) {
-        console.error(`Server error [${res.status}]:`, rawText.slice(0, 500));
-        toast.error("Failed to upload resume");
-        return;
-      }
-
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        console.error("Expected JSON but got:", rawText.slice(0, 300));
-        toast.error("Invalid server response");
-        return;
-      }
+      const data = response.data;
 
       if (data.success && data.data?.extractedData) {
         // Update form data with extracted information
@@ -892,7 +861,7 @@ const CVBuilder = () => {
   const getCVCompletionStatus = (formData) => {
     const missing = [];
 
-    console.log('CV Completion Check - formData:', formData); // Debug log
+    console.log("CV Completion Check - formData:", formData); // Debug log
 
     /* ---------- PERSONAL INFO ---------- */
     const hasPersonalInfo =
@@ -901,7 +870,7 @@ const CVBuilder = () => {
       formData?.phone?.trim() &&
       formData?.location?.trim();
 
-    console.log('CV Completion Check - hasPersonalInfo:', hasPersonalInfo); // Debug log
+    console.log("CV Completion Check - hasPersonalInfo:", hasPersonalInfo); // Debug log
 
     if (!hasPersonalInfo) missing.push("Personal");
 
@@ -910,10 +879,13 @@ const CVBuilder = () => {
       Array.isArray(formData?.experience) &&
       formData.experience.length > 0 &&
       formData.experience.some(
-        (exp) => exp.title?.trim() && exp.company?.trim()
+        (exp) => exp.title?.trim() && exp.company?.trim(),
       );
 
-    console.log('CV Completion Check - hasValidExperience:', hasValidExperience); // Debug log
+    console.log(
+      "CV Completion Check - hasValidExperience:",
+      hasValidExperience,
+    ); // Debug log
 
     if (!hasValidExperience) missing.push("Work");
 
@@ -922,10 +894,10 @@ const CVBuilder = () => {
       Array.isArray(formData?.education) &&
       formData.education.length > 0 &&
       formData.education.some(
-        (edu) => edu.school?.trim() && edu.degree?.trim()
+        (edu) => edu.school?.trim() && edu.degree?.trim(),
       );
 
-    console.log('CV Completion Check - hasValidEducation:', hasValidEducation); // Debug log
+    console.log("CV Completion Check - hasValidEducation:", hasValidEducation); // Debug log
 
     if (!hasValidEducation) missing.push("Education");
 
@@ -934,8 +906,8 @@ const CVBuilder = () => {
       (formData?.skills?.technical?.length ?? 0) > 0 ||
       (formData?.skills?.soft?.length ?? 0) > 0;
 
-    console.log('CV Completion Check - hasSkills:', hasSkills); // Debug log
-    console.log('CV Completion Check - missing sections:', missing); // Debug log
+    console.log("CV Completion Check - hasSkills:", hasSkills); // Debug log
+    console.log("CV Completion Check - missing sections:", missing); // Debug log
 
     // Projects and Certifications are optional for completion
 
@@ -947,7 +919,7 @@ const CVBuilder = () => {
 
   useEffect(() => {
     const statusInfo = getCVCompletionStatus(formData);
-    console.log('CV Completion Status:', statusInfo); // Debug log
+    console.log("CV Completion Status:", statusInfo); // Debug log
     setcompletion(statusInfo);
   }, [formData]);
 
@@ -955,17 +927,21 @@ const CVBuilder = () => {
   const isSectionValid = () => {
     switch (activeSection) {
       case "personal":
-        return formData?.fullName?.trim() &&
+        return (
+          formData?.fullName?.trim() &&
           formData?.email?.trim() &&
           formData?.phone?.trim() &&
-          formData?.location?.trim();
+          formData?.location?.trim()
+        );
       case "work":
         return formData?.experience && formData.experience.length > 0;
       case "education":
         return formData?.education && formData.education.length > 0;
       case "skills":
-        return (formData?.skills?.technical?.length ?? 0) > 0 ||
-          (formData?.skills?.soft?.length ?? 0) > 0;
+        return (
+          (formData?.skills?.technical?.length ?? 0) > 0 ||
+          (formData?.skills?.soft?.length ?? 0) > 0
+        );
       case "projects":
         return formData?.projects && formData.projects.length > 0;
       case "certifications":
@@ -1166,7 +1142,10 @@ const CVBuilder = () => {
                       <button
                         onClick={() => {
                           // Only show popup if it's the absolute last step AND the resume is complete
-                          if (currentIndex === sections.length - 1 && completion?.isComplete) {
+                          if (
+                            currentIndex === sections.length - 1 &&
+                            completion?.isComplete
+                          ) {
                             setShowCompletionPopup(true);
                           } else {
                             goNext();
@@ -1175,7 +1154,11 @@ const CVBuilder = () => {
                         disabled={false}
                         className="flex gap-2 items-center text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg select-none disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                       >
-                        <span className="hidden sm:inline">{currentIndex === sections.length - 1 ? "Finish" : "Next Step"}</span>
+                        <span className="hidden sm:inline">
+                          {currentIndex === sections.length - 1
+                            ? "Finish"
+                            : "Next Step"}
+                        </span>
                         <ArrowRight size={16} />
                       </button>
                     </div>
@@ -1254,7 +1237,10 @@ const CVBuilder = () => {
                   <button
                     onClick={() => {
                       // Only show popup if it's the absolute last step AND the resume is complete
-                      if (currentIndex === sections.length - 1 && completion?.isComplete) {
+                      if (
+                        currentIndex === sections.length - 1 &&
+                        completion?.isComplete
+                      ) {
                         setShowCompletionPopup(true);
                       } else {
                         goNext();
@@ -1333,7 +1319,7 @@ const CVBuilder = () => {
               <CVPreview
                 {...previewProps}
                 isMaximized={false}
-                onToggleMaximize={() => { }}
+                onToggleMaximize={() => {}}
               />
             </div>
           </div>
@@ -1355,12 +1341,27 @@ const CVBuilder = () => {
           <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">CV Complete!</h3>
-              <p className="text-gray-600 mb-6">Your CV has been successfully completed with all required information. You can now download or preview your CV.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                CV Complete!
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Your CV has been successfully completed with all required
+                information. You can now download or preview your CV.
+              </p>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => setShowCompletionPopup(false)}
@@ -1388,4 +1389,3 @@ const CVBuilder = () => {
 };
 
 export default CVBuilder;
-

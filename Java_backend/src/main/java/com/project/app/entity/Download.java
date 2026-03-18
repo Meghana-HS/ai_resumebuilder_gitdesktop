@@ -1,20 +1,15 @@
 package com.project.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "downloads")
 public class Download {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -61,54 +56,125 @@ public class Download {
     private LocalDateTime updatedAt;
 
     // Manual getters/setters to fix compilation issues
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public User getUser() {
+        return user;
+    }
 
-    public DocumentType getType() { return type; }
-    public void setType(DocumentType type) { this.type = type; }
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-    public Action getAction() { return action; }
-    public void setAction(Action action) { this.action = action; }
+    public String getName() {
+        return name;
+    }
 
-    public Format getFormat() { return format; }
-    public void setFormat(Format format) { this.format = format; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getHtml() { return html; }
-    public void setHtml(String html) { this.html = html; }
+    public DocumentType getType() {
+        return type;
+    }
 
-    public String getTemplate() { return template; }
-    public void setTemplate(String template) { this.template = template; }
+    public void setType(DocumentType type) {
+        this.type = type;
+    }
 
-    public String getSize() { return size; }
-    public void setSize(String size) { this.size = size; }
+    public Action getAction() {
+        return action;
+    }
 
-    public Integer getViews() { return views; }
-    public void setViews(Integer views) { this.views = views; }
+    public void setAction(Action action) {
+        this.action = action;
+    }
 
-    public LocalDateTime getDownloadDate() { return downloadDate; }
-    public void setDownloadDate(LocalDateTime downloadDate) { this.downloadDate = downloadDate; }
+    public Format getFormat() {
+        return format;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setFormat(Format format) {
+        this.format = format;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getHtml() {
+        return html;
+    }
+
+    public void setHtml(String html) {
+        this.html = html;
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(String template) {
+        this.template = template;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public Integer getViews() {
+        return views;
+    }
+
+    public void setViews(Integer views) {
+        this.views = views;
+    }
+
+    public LocalDateTime getDownloadDate() {
+        return downloadDate;
+    }
+
+    public void setDownloadDate(LocalDateTime downloadDate) {
+        this.downloadDate = downloadDate;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     public enum DocumentType {
-        RESUME, COVER_LETTER, CV
+        RESUME,
+        COVER_LETTER,
+        CV,
     }
 
     public enum Action {
-        VISITED, PREVIEW, DOWNLOAD
+        VISITED,
+        PREVIEW,
+        DOWNLOAD,
     }
 
     public enum Format {
-        PDF, DOCX, DOC
+        PDF,
+        DOCX,
+        DOC,
     }
 }
