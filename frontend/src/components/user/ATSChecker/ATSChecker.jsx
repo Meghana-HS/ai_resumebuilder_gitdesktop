@@ -375,6 +375,24 @@ const ATSChecker = ({ onSidebarToggle }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [previewType, setPreviewType] = useState('pdf');
   const analysisStartTimeRef = useRef(null);
+  const [activityTick, setActivityTick] = useState(0);
+
+  const logActivity = async (action = "visited", html = "") => {
+    try {
+      await axiosInstance.post("/api/downloads", {
+        name: "ats_checker",
+        type: "ats-checker",
+        action,
+        format: "PDF",
+        html,
+        template: "ats-default",
+        size: "0 KB",
+      });
+    } catch (err) {
+      console.error("ATS activity log failed:", err);
+    }
+  };
+  const bumpActivity = () => setActivityTick((n) => n + 1);
 
   /* ── Score animation ── */
   useEffect(() => {
@@ -420,7 +438,23 @@ const ATSChecker = ({ onSidebarToggle }) => {
   useEffect(() => {
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem("ats_analysis_result");
+    if (!sessionStorage.getItem("ats-visited")) {
+      logActivity("visited");
+      sessionStorage.setItem("ats-visited", "true");
+    }
   }, []);
+
+  useEffect(() => {
+    if (activityTick === 0) return;
+    const timer = setTimeout(() => logActivity("edited"), 2500);
+    return () => clearTimeout(timer);
+  }, [activityTick]);
+
+  useEffect(() => {
+    if (analysisResult?.overallScore >= 0) {
+      logActivity("preview");
+    }
+  }, [analysisResult]);
 
   /* ── Spell locator ── */
   useEffect(() => {
@@ -479,6 +513,7 @@ const ATSChecker = ({ onSidebarToggle }) => {
   }, [activeError]);
 
   /* ── File change ── */
+<<<<<<< HEAD
 const handleFileChange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -499,6 +534,12 @@ const handleFileChange = async (e) => {
   setUploadedFile(file);
   setIsAnalyzing(true);
   analysisStartTimeRef.current = Date.now();
+=======
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    bumpActivity();
+>>>>>>> 26bcd11 (userside)
 
   // Support PDF, DOC, and DOCX
   if (file.type === "application/pdf" || fileExtension === 'pdf') {
