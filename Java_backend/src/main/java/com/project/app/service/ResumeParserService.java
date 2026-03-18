@@ -197,6 +197,7 @@ public class ResumeParserService {
     @SuppressWarnings("unchecked")
     private Map<String, Object> extractResumeData(String text) {
         Map<String, Object> data = new LinkedHashMap<>();
+        data.put("rawText", text);
         data.put("email", null);
         data.put("phone", null);
         data.put("name", null);

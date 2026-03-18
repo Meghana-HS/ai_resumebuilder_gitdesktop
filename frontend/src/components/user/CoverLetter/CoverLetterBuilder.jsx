@@ -1,6 +1,10 @@
 // CoverLetterBuilder.jsx
 
 import { useState, useEffect, useRef } from "react";
+import {
+  generateWordFromReactElement,
+  sanitiseFilename,
+} from "../../../utils/wordExport";
 
 import {
   ArrowLeft,
@@ -129,6 +133,12 @@ const tabs = [
 
   { id: "closing", label: "Closing", icon: User },
 ];
+
+const sanitizeForName = (s) =>
+  (s || "")
+    .replace(/[^a-z0-9_\- ]/gi, "")
+    .trim()
+    .replace(/\s+/g, "_");
 
 const CoverLetterBuilder = () => {
   const headerRef = useRef(null);
@@ -290,7 +300,7 @@ const CoverLetterBuilder = () => {
   const saveDownloadRecord = async (html, format = "PDF") => {
     try {
       await axiosInstance.post("/api/downloads", {
-        name: `Cover Letter - ${documentTitle || formData.fullName || "Document"}`,
+        name: `coverletter_${sanitizeForName(documentTitle || formData.fullName || "Document")}`,
 
         type: "cover-letter",
 
@@ -328,7 +338,7 @@ const CoverLetterBuilder = () => {
         sanitize(documentTitle) || sanitize(formData.fullName) || "Document";
 
       await axiosInstance.post("/api/downloads", {
-        name: `Cover Letter - ${nameToUse}`,
+        name: `coverletter_${sanitizeForName(documentTitle || formData.fullName || "Document")}`,
 
         type: "cover-letter",
 
@@ -473,9 +483,14 @@ const CoverLetterBuilder = () => {
     setIsExporting(true);
 
     try {
+      // Capture HTML for storing in downloads
+      let capturedHtml = "";
+      if (previewRef.current?.captureHTML) {
+        capturedHtml = (await previewRef.current.captureHTML()) || "";
+      }
       if (previewRef.current?.downloadPDF) {
         await previewRef.current.downloadPDF();
-        await saveDownloadRecord("", "PDF");
+        await saveDownloadRecord(capturedHtml, "PDF");
       } else {
         alert("Preview not ready. Please try again.");
       }
@@ -777,15 +792,54 @@ ${
   ====================================================== */
 
   const exportToWord = async () => {
-    if (!formData.fullName || !formData.jobTitle) {
-      alert("Please fill your name and job title first");
-
+    if (!formData.fullName) {
+      alert("Please fill your name first");
       return;
     }
 
     setIsExporting(true);
 
-    const html = `
+    try {
+      // Capture HTML for storing in downloads (same snapshot used for preview)
+      let capturedHtml = "";
+      if (previewRef.current?.captureHTML) {
+        capturedHtml = (await previewRef.current.captureHTML()) || "";
+      }
+
+      // Derive the filename from the document title or user's name
+      const baseName =
+        sanitiseFilename(documentTitle) ||
+        sanitiseFilename(formData.fullName) ||
+        "Cover_Letter";
+      const filename = `coverletter_${baseName}`;
+
+      // Determine which template component to render
+      const TemplateComponent = CoverLetterTemplates[selectedTemplate];
+      if (!TemplateComponent) {
+        alert("No template selected. Please choose a template first.");
+        return;
+      }
+
+      // Render the same template that the PDF uses and generate a
+      // pixel-perfect .docx (html2canvas → image → real .docx file)
+      await generateWordFromReactElement(
+        <TemplateComponent formData={formData} exportDate={date} />,
+        filename,
+      );
+
+      // Persist the download record so it appears on the Downloads page
+      await saveDownloadRecord(capturedHtml, "DOCX");
+    } catch (err) {
+      console.error("Cover letter Word export failed:", err);
+      alert("Failed to generate Word document. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // ─── UNUSED BACKUP (kept for reference) ──────────────────────────────────
+  const _exportToWord_html_backup = async () => {
+    const html_unused = `
 
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
 
@@ -1090,7 +1144,7 @@ ${
 
     URL.revokeObjectURL(url);
 
-    await saveDownloadRecord(html, "DOCX");
+    await saveDownloadRecord(html_unused, "DOCX");
 
     setTimeout(() => setIsExporting(false), 800);
   };
@@ -1521,6 +1575,7 @@ ${
               ref={previewRef}
               formData={formData}
               exportDate={date}
+              documentTitle={documentTitle}
             />
           </div>
         </div>
@@ -1565,6 +1620,7 @@ ${
                 ref={previewRef}
                 formData={formData}
                 exportDate={date}
+                documentTitle={documentTitle}
               />
             </div>
           </div>

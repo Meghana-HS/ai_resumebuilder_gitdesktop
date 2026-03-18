@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axiosInstance from "../../../api/axios";
+import { generateWordFromHtml } from "../../../utils/wordExport";
 import {
   FiDownload,
   FiFile,
@@ -121,10 +122,8 @@ const Downloads = () => {
     try {
       setIsRefreshing(true);
       setLoading(true);
-      const response = await axiosInstance.get(
-        "/api/downloads?limit=50&page=1",
-      );
-      const { downloads: bd } = response.data;
+      const response = await axiosInstance.get("/api/downloads");
+      const bd = response.data.data || response.data.downloads || [];
       const mapped = bd.map((d) => ({
         id: d._id?.toString?.() || d.id,
         name: d.name,
@@ -164,7 +163,7 @@ const Downloads = () => {
 
       setPreviewDocument({
         ...download,
-        html: response.data.html, // ✅ HTML is already in the response!
+        html: response.data.data?.html || response.data.html || "",
       });
     } catch (err) {
       console.error("Preview error:", err);
@@ -177,24 +176,106 @@ const Downloads = () => {
 
   const handleDownload = async (download) => {
     try {
-      const url =
-        download.format === "DOCX"
-          ? `/api/downloads/${download.id}/word`
-          : `/api/downloads/${download.id}/pdf`;
-      const res = await axiosInstance.get(url, { responseType: "blob" });
-      const blob = new Blob([res.data], {
-        type:
-          download.format === "PDF"
-            ? "application/pdf"
-            : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      // Fetch stored HTML
+      const res = await axiosInstance.get(`/api/downloads/${download.id}`);
+      const html = res.data?.data?.html || res.data?.html || "";
+
+      if (!html || html.trim() === "") {
+        alert(
+          "No preview data is available for this document. Please re-download it from the builder page.",
+        );
+        return;
+      }
+
+      // Determine file prefix
+      const prefix =
+        download.type === "cv"
+          ? "cv"
+          : download.type === "resume"
+            ? "resume"
+            : "coverletter";
+
+      const clean = (s) =>
+        (s || "")
+          .replace(/[^a-z0-9_\- ]/gi, "")
+          .trim()
+          .replace(/\s+/g, "_");
+      const baseName = clean(download.name) || "document";
+      const fileName = `${prefix}_${baseName}`;
+
+      if (download.format === "DOCX") {
+        // Generate a pixel-perfect .docx from the stored HTML snapshot
+        await generateWordFromHtml(html, fileName);
+        return;
+      }
+
+      // For PDF: use html2canvas + jsPDF
+      const container = document.createElement("div");
+      Object.assign(container.style, {
+        position: "fixed",
+        top: "0",
+        left: "-9999px",
+        width: "794px",
+        background: "#ffffff",
+        zIndex: "-1",
       });
-      const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `${download.name.replace(/[^a-zA-Z0-9.-]/g, "_")}.${download.format.toLowerCase()}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch {
+      container.innerHTML = html;
+      document.body.appendChild(container);
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      const { default: html2canvas } = await import("html2canvas");
+      const { default: jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: 794,
+      });
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+      const mmPageW = 210;
+      const mmPageH = 297;
+      const pxPerMm = canvas.width / mmPageW;
+      const pxSliceH = Math.round(mmPageH * pxPerMm);
+
+      let yPx = 0;
+      let first = true;
+      while (yPx < canvas.height) {
+        const sliceH = Math.min(pxSliceH, canvas.height - yPx);
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = pxSliceH;
+        const ctx = pageCanvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0,
+          yPx,
+          canvas.width,
+          sliceH,
+          0,
+          0,
+          canvas.width,
+          sliceH,
+        );
+        const imgData = pageCanvas.toDataURL("image/jpeg", 0.95);
+        if (!first) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, 0, mmPageW, mmPageH);
+        yPx += sliceH;
+        first = false;
+      }
+
+      pdf.save(`${fileName}.pdf`);
+      document.body.removeChild(container);
+    } catch (err) {
+      console.error("Download failed:", err);
       alert("Download failed. Please try again.");
     }
   };
@@ -445,7 +526,6 @@ const Downloads = () => {
               {download.name}
             </h3>
           </div>
-
         </div>
 
         {/* Meta strip */}
@@ -496,7 +576,16 @@ const Downloads = () => {
             <FiEye size={11} /> Preview
           </button>
 
-          {/* Delete icon only */}
+          {/* Download */}
+          <button
+            onClick={() => handleDownload(download)}
+            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-blue-100 text-blue-500 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-200 transition-all"
+            title="Download"
+          >
+            <FiDownload size={12} />
+          </button>
+
+          {/* Delete */}
           <button
             onClick={() => handleDelete(download.id)}
             disabled={isDeleting}
@@ -525,8 +614,11 @@ const Downloads = () => {
   return (
     <>
       <UserNavBar />
-          <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>  
-          <div className="flex-1 w-full px-4 sm:px-6 lg:px-10 py-8">
+      <div
+        className="min-h-screen flex flex-col"
+        style={{ backgroundColor: "#f8f9fb" }}
+      >
+        <div className="flex-1 w-full px-4 sm:px-6 lg:px-10 py-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <div>
@@ -642,8 +734,6 @@ const Downloads = () => {
             </div>
           )}
 
-
-
           {/* Grid */}
           {filteredDownloads.length === 0 ? (
             <motion.div
@@ -729,12 +819,10 @@ const Downloads = () => {
               </button>
             </div>
           )}
-
-          
         </div>
         <footer className="text-center py-4 bg-white border-t text-sm text-gray-600">
-    © {new Date().getFullYear()} ResumeAI Inc. All rights reserved.
-  </footer>
+          © {new Date().getFullYear()} ResumeAI Inc. All rights reserved.
+        </footer>
       </div>
 
       {/* ========== PREVIEW MODAL (FLOATING + MOBILE RESPONSIVE) ========== */}
@@ -965,32 +1053,27 @@ const Downloads = () => {
                     </div>
                   ) : previewDocument?.html ? (
                     <div className="flex justify-center">
-                      <div
-                        className="bg-white shadow-lg"
+                      <iframe
+                        srcDoc={
+                          previewDocument.html?.startsWith("<!DOCTYPE") ||
+                          previewDocument.html?.startsWith("<html")
+                            ? previewDocument.html
+                            : `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}body{margin:0;padding:0;}</style></head><body>${previewDocument.html}</body></html>`
+                        }
                         style={{
-                          width:
-                            previewViewportWidth < 520
-                              ? `${previewViewportWidth * 0.98}px`
-                              : `${A4_WIDTH_PX}px`,
+                          width: "794px",
                           minHeight: "1123px",
-                          padding: "56px 48px",
-                          fontFamily: "'Times New Roman', Times, serif",
-                          fontSize: "11pt",
-                          lineHeight: "1.6",
-                          color: "#1f2937",
-                          boxSizing: "border-box",
+                          border: "none",
+                          background: "white",
+                          display: "block",
                           transform: `scale(${effectiveScale})`,
                           transformOrigin: "top center",
-                          marginBottom: "24px",
+                          marginBottom: `${(1 - effectiveScale) * -1123}px`,
                         }}
+                        sandbox="allow-same-origin allow-scripts"
+                        scrolling="no"
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: previewDocument.html,
-                          }}
-                        />
-                      </div>
+                      />
                     </div>
                   ) : (
                     <div className="text-center text-gray-400 py-20">

@@ -1,3 +1,5 @@
+import axiosInstance from "../../../api/axios";
+import { useState as useLocalState } from "react";
 import "./ATSChecker.css";
 import ATSPdfPreview from "./ATSPdfPreview";
 import ATSDocPreview from "./ATSDocPreview";
@@ -13,6 +15,14 @@ import {
   Target,
   Shield,
   Zap,
+  Lightbulb,
+  Briefcase,
+  ChevronUp,
+  TrendingUp,
+  Star,
+  AlertCircle,
+  Info,
+  Plus,
 } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -320,7 +330,8 @@ function ErrorTable({ errors, type, onSelect }) {
       </div>
     </div>
   );
-}function CircularLoader() {
+}
+function CircularLoader() {
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="relative w-16 h-16">
@@ -354,6 +365,366 @@ function ErrorTable({ errors, type, onSelect }) {
   );
 }
 
+/* ─── Suggestions Panel ─── */
+function SuggestionsPanel({ suggestions }) {
+  const [expanded, setExpanded] = useLocalState(true);
+  const [filter, setFilter] = useLocalState("all");
+
+  if (!suggestions || suggestions.length === 0) return null;
+
+  const priorityMeta = {
+    critical: {
+      icon: XCircle,
+      color: "text-red-600",
+      bg: "bg-red-50",
+      border: "border-red-200",
+      badge: "bg-red-100 text-red-700",
+      dot: "bg-red-500",
+      label: "Critical",
+    },
+    important: {
+      icon: AlertTriangle,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+      border: "border-amber-200",
+      badge: "bg-amber-100 text-amber-700",
+      dot: "bg-amber-500",
+      label: "Important",
+    },
+    tip: {
+      icon: Lightbulb,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      badge: "bg-blue-100 text-blue-700",
+      dot: "bg-blue-400",
+      label: "Tip",
+    },
+  };
+
+  const categoryIcons = {
+    contact: "📇",
+    experience: "💼",
+    education: "🎓",
+    skills: "⚡",
+    summary: "📝",
+    keywords: "🔑",
+    formatting: "📐",
+    default: "💡",
+  };
+
+  const counts = {
+    all: suggestions.length,
+    critical: suggestions.filter((s) => s.priority === "critical").length,
+    important: suggestions.filter((s) => s.priority === "important").length,
+    tip: suggestions.filter((s) => s.priority === "tip").length,
+  };
+
+  const filtered =
+    filter === "all"
+      ? suggestions
+      : suggestions.filter((s) => s.priority === filter);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="mt-5 rounded-2xl border border-slate-200 overflow-hidden"
+    >
+      {/* Header */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-slate-50 to-white hover:from-slate-100 transition-colors"
+      >
+        <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+          <Lightbulb size={14} className="text-violet-600" />
+        </div>
+        <span className="text-sm font-bold text-slate-800 flex-1 text-left">
+          Improvement Suggestions
+        </span>
+        {counts.critical > 0 && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+            {counts.critical} critical
+          </span>
+        )}
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+          {counts.all}
+        </span>
+        {expanded ? (
+          <ChevronUp size={14} className="text-slate-400 flex-shrink-0" />
+        ) : (
+          <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Filter tabs */}
+            <div className="flex gap-1 px-4 py-2 border-t border-slate-100 bg-white">
+              {[
+                { key: "all", label: "All" },
+                { key: "critical", label: "Critical" },
+                { key: "important", label: "Important" },
+                { key: "tip", label: "Tips" },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    filter === key
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-400 hover:text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {label}
+                  {counts[key] > 0 && (
+                    <span className="ml-1 opacity-70">({counts[key]})</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Suggestion cards */}
+            <div className="px-3 pb-3 space-y-2 bg-white">
+              {filtered.map((s, i) => {
+                const meta = priorityMeta[s.priority] || priorityMeta.tip;
+                const Icon = meta.icon;
+                const catIcon =
+                  categoryIcons[s.category] || categoryIcons.default;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`rounded-xl border p-3 ${meta.bg} ${meta.border}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-base leading-none mt-0.5">
+                        {catIcon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${meta.badge}`}
+                          >
+                            {meta.label}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-700">
+                            {s.message}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          <span className="font-semibold text-slate-600">
+                            Fix:{" "}
+                          </span>
+                          {s.action}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+/* ─── Job Roles Panel ─── */
+function JobRolesPanel({ roles }) {
+  const [expanded, setExpanded] = useLocalState(true);
+
+  if (!roles || roles.length === 0) return null;
+
+  const expMeta = {
+    entry: { label: "Entry Level", color: "text-emerald-600 bg-emerald-50" },
+    mid: { label: "Mid Level", color: "text-blue-600 bg-blue-50" },
+    senior: { label: "Senior Level", color: "text-violet-600 bg-violet-50" },
+  };
+
+  const getMatchColor = (pct) => {
+    if (pct >= 80)
+      return {
+        bar: "bg-emerald-500",
+        text: "text-emerald-700",
+        bg: "bg-emerald-50 border-emerald-200",
+      };
+    if (pct >= 60)
+      return {
+        bar: "bg-blue-500",
+        text: "text-blue-700",
+        bg: "bg-blue-50 border-blue-200",
+      };
+    if (pct >= 40)
+      return {
+        bar: "bg-amber-500",
+        text: "text-amber-700",
+        bg: "bg-amber-50 border-amber-200",
+      };
+    return {
+      bar: "bg-slate-400",
+      text: "text-slate-600",
+      bg: "bg-slate-50 border-slate-200",
+    };
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7 }}
+      className="mt-4 rounded-2xl border border-slate-200 overflow-hidden"
+    >
+      {/* Header */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-slate-50 to-white hover:from-slate-100 transition-colors"
+      >
+        <div className="w-7 h-7 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0">
+          <Briefcase size={14} className="text-teal-600" />
+        </div>
+        <span className="text-sm font-bold text-slate-800 flex-1 text-left">
+          Recommended Job Roles
+        </span>
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+          {roles.length} match{roles.length !== 1 ? "es" : ""}
+        </span>
+        {expanded ? (
+          <ChevronUp size={14} className="text-slate-400 flex-shrink-0" />
+        ) : (
+          <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white border-t border-slate-100"
+          >
+            <div className="px-3 py-3 space-y-3">
+              {roles.map((role, i) => {
+                const mc = getMatchColor(role.matchPercent);
+                const exp = expMeta[role.experienceLevel] || expMeta.mid;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.07 }}
+                    className={`rounded-xl border p-3.5 ${mc.bg}`}
+                  >
+                    {/* Role title + badges */}
+                    <div className="flex items-start gap-2 mb-2 flex-wrap">
+                      <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+                        <Briefcase size={13} className="text-slate-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-800 leading-tight">
+                          {role.title}
+                        </p>
+                        <span
+                          className={`inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${exp.color}`}
+                        >
+                          {exp.label}
+                        </span>
+                      </div>
+                      {/* Match % badge */}
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        <span className={`text-sm font-extrabold ${mc.text}`}>
+                          {role.matchPercent}%
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          match
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="h-1.5 rounded-full bg-white/80 border border-slate-200 overflow-hidden mb-2.5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${role.matchPercent}%` }}
+                        transition={{ duration: 0.8, delay: i * 0.07 + 0.3 }}
+                        className={`h-full rounded-full ${mc.bar}`}
+                      />
+                    </div>
+
+                    {/* Matched skills */}
+                    {role.matchedSkills?.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">
+                          ✅ You have
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {role.matchedSkills.map((sk, j) => (
+                            <span
+                              key={j}
+                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200"
+                            >
+                              {sk}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Missing skills */}
+                    {role.missingSkills?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">
+                          <Plus
+                            size={9}
+                            className="inline mr-0.5 text-amber-500"
+                          />
+                          Consider adding
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {role.missingSkills.map((sk, j) => (
+                            <span
+                              key={j}
+                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+                            >
+                              {sk}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Footer hint */}
+            <div className="px-4 pb-3 flex items-start gap-2">
+              <Info size={11} className="text-slate-300 mt-0.5 flex-shrink-0" />
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                Recommendations are based on skills detected in your resume.
+                Tailor your resume to each specific job posting for best
+                results.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 /* ═══════════════════ MAIN COMPONENT ═══════════════════ */
 const PANEL_HEIGHT = "calc(100vh - 180px)";
 
@@ -373,7 +744,7 @@ const ATSChecker = ({ onSidebarToggle }) => {
   const [pdfInstance, setPdfInstance] = useState(null);
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [previewType, setPreviewType] = useState('pdf');
+  const [previewType, setPreviewType] = useState("pdf");
   const analysisStartTimeRef = useRef(null);
 
   /* ── Score animation ── */
@@ -479,124 +850,119 @@ const ATSChecker = ({ onSidebarToggle }) => {
   }, [activeError]);
 
   /* ── File change ── */
-const handleFileChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  const fileExtension = file.name.split('.').pop()?.toLowerCase();
-  const isValidFormat = ['pdf', 'doc', 'docx'].includes(fileExtension) || 
-                        file.type === "application/pdf" || 
-                        file.type === "application/msword" || 
-                        file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  
-   setAnalysisResult(null);
-  setAnimatedScore(0);
-  setSpellingErrors([]);
-  setPronounErrors([]);
-  setActiveError(null);
-  setResumeText("");
-  
-  setUploadedFile(file);
-  setIsAnalyzing(true);
-  analysisStartTimeRef.current = Date.now();
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // Support PDF, DOC, and DOCX
-  if (file.type === "application/pdf" || fileExtension === 'pdf') {
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    setPreviewType('pdf');
-    sessionStorage.setItem(SESSION_KEY, url);
-  } else if (['doc', 'docx'].includes(fileExtension)) {
-    // For DOC/DOCX, we'll show text preview after analysis
-    setPreviewType('doc');
-    setPreviewUrl(null); // Will use text from backend
-  }
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const isValidFormat =
+      ["pdf", "doc", "docx"].includes(fileExtension) ||
+      file.type === "application/pdf" ||
+      file.type === "application/msword" ||
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-  const formData = new FormData();
-  formData.append("resume", file);
-  formData.append("jobTitle", "Placeholder title");
-  formData.append("templateId", "63f1c4e2a3b4d5f678901234");
-  formData.append("resumeprofileId", "63f1c4e2a3b4d5f678901235");
+    setAnalysisResult(null);
+    setAnimatedScore(0);
+    setSpellingErrors([]);
+    setPronounErrors([]);
+    setActiveError(null);
+    setResumeText("");
 
-  try {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    const res = await fetch("http://localhost:5000/api/resume/upload", {
-      method: "POST",
-      body: formData,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    setUploadedFile(file);
+    setIsAnalyzing(true);
+    analysisStartTimeRef.current = Date.now();
 
-    const rawText = await res.text();
-
-    if (!res.ok) {
-      console.error(`Server error [${res.status}]:`, rawText.slice(0, 500));
-      return;
+    // Support PDF, DOC, and DOCX
+    if (file.type === "application/pdf" || fileExtension === "pdf") {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setPreviewType("pdf");
+      sessionStorage.setItem(SESSION_KEY, url);
+    } else if (["doc", "docx"].includes(fileExtension)) {
+      // For DOC/DOCX, we'll show text preview after analysis
+      setPreviewType("doc");
+      setPreviewUrl(null); // Will use text from backend
     }
 
-    let data;
+    const formData = new FormData();
+    formData.append("resume", file);
+    formData.append("jobTitle", "Placeholder title");
+    formData.append("templateId", "63f1c4e2a3b4d5f678901234");
+    formData.append("resumeprofileId", "63f1c4e2a3b4d5f678901235");
+
     try {
-      data = JSON.parse(rawText);
-    } catch {
-      console.error("Expected JSON but got:", rawText.slice(0, 300));
-      return;
-    }
+      const res = await axiosInstance.post("/api/resume/ats-scan", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-    if (data.success) {
-      const updatedData = { ...data.data };
-      
-      if (updatedData.sectionScores) {
-        updatedData.sectionScores = updatedData.sectionScores.map(section => {
-          if (section.sectionName === "File Format Compatibility") {
-            return {
-              ...section,
-              score: isValidFormat ? section.maxScore : 0,
-              status: isValidFormat ? "ok" : "error",
-              suggestions: isValidFormat ? [] : ["Upload resume in PDF or DOC/DOCX format."]
-            };
-          }
-          return section;
-        });
-        
-        const totalScore = updatedData.sectionScores.reduce(
-          (sum, section) => sum + (section.score || 0),
-          0
+      const data = res.data;
+
+      if (data.success) {
+        const updatedData = { ...data.data };
+
+        if (updatedData.sectionScores) {
+          updatedData.sectionScores = updatedData.sectionScores.map(
+            (section) => {
+              if (section.sectionName === "File Format Compatibility") {
+                return {
+                  ...section,
+                  score: isValidFormat ? section.maxScore : 0,
+                  status: isValidFormat ? "ok" : "error",
+                  suggestions: isValidFormat
+                    ? []
+                    : ["Upload resume in PDF or DOC/DOCX format."],
+                };
+              }
+              return section;
+            },
+          );
+
+          const totalScore = updatedData.sectionScores.reduce(
+            (sum, section) => sum + (section.score || 0),
+            0,
+          );
+          const maxTotal = updatedData.sectionScores.reduce(
+            (sum, section) => sum + (section.maxScore || 0),
+            0,
+          );
+
+          updatedData.overallScore =
+            maxTotal > 0 ? Math.round((totalScore / maxTotal) * 100) : 0;
+        }
+
+        setAnalysisResult(updatedData);
+        if (updatedData.pronounAnalysis?.detected)
+          setPronounErrors(updatedData.pronounAnalysis.detected);
+        setResumeText(updatedData?.text || "");
+        sessionStorage.setItem(
+          "ats_analysis_result",
+          JSON.stringify(updatedData),
         );
-        const maxTotal = updatedData.sectionScores.reduce(
-          (sum, section) => sum + (section.maxScore || 0),
-          0
-        );
-        
-        updatedData.overallScore = maxTotal > 0 
-          ? Math.round((totalScore / maxTotal) * 100) 
-          : 0;
+      } else {
+        console.error("API returned success: false →", data?.message || data);
       }
-      
-      setAnalysisResult(updatedData);
-      if (updatedData.pronounAnalysis?.detected)
-        setPronounErrors(updatedData.pronounAnalysis.detected);
-      setResumeText(updatedData?.text || "");
-      sessionStorage.setItem("ats_analysis_result", JSON.stringify(updatedData));
-    } else {
-      console.error("API returned success: false →", data?.message || data);
+    } catch (err) {
+      console.error(
+        "ATS fetch failed — is the backend running on port 5000?",
+        err,
+      );
+    } finally {
+      // Enforce minimum 5.5 second loading animation
+      const elapsed = Date.now() - analysisStartTimeRef.current;
+      const minDuration = 5500; // 5.5 seconds
+
+      if (elapsed < minDuration) {
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          analysisStartTimeRef.current = null;
+        }, minDuration - elapsed);
+      } else {
+        setIsAnalyzing(false);
+        analysisStartTimeRef.current = null;
+      }
     }
-  } catch (err) {
-  console.error("ATS fetch failed — is the backend running on port 5000?", err);
-} finally {
-  // Enforce minimum 5.5 second loading animation
-  const elapsed = Date.now() - analysisStartTimeRef.current;
-  const minDuration = 5500; // 5.5 seconds
-  
-  if (elapsed < minDuration) {
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      analysisStartTimeRef.current = null;
-    }, minDuration - elapsed);
-  } else {
-    setIsAnalyzing(false);
-    analysisStartTimeRef.current = null;
-  }
-}
-};
+  };
   const buildErrorLocationsFromPdf = async (pdf, wrongWords) => {
     if (!pdf || !wrongWords?.length) return [];
     const errors = [];
@@ -716,149 +1082,202 @@ const handleFileChange = async (e) => {
               </div>
             </div>
 
-      <div className="p-5 flex-1 flex flex-col relative">
-  {/* 📦 Content Container - Blurred when analyzing */}
-  <div className={`transition-all duration-300 ${isAnalyzing && uploadedFile ? 'blur-sm opacity-50 pointer-events-none' : ''}`}>
-    
-    {/* Score Ring */}
-    {analysisResult ? (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }} 
-        animate={{ opacity: 1, scale: 1 }} 
-        transition={{ duration: 1.4 }} 
-        key={`score-${uploadedFile?.name}`}
-      >
-        <ScoreRing score={analysisResult} animated={animatedScore} />
-      </motion.div>
-    ) : (
-      /* Empty State */
-      <div className="flex-1 flex items-center justify-center min-h-[300px]">
-        <div className="rounded-2xl border-2 border-dashed border-slate-100 p-8 text-center w-full">
-          <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-3">
-            <Target size={28} className="text-slate-200" />
-          </div>
-          <p className="text-sm font-semibold text-slate-400 mb-1">No resume uploaded yet</p>
-          <p className="text-xs text-slate-300">Upload a resume on the right to see your ATS score here</p>
-        </div>
-      </div>
-    )}
+            <div className="p-5 flex-1 flex flex-col relative">
+              {/* 📦 Content Container - Blurred when analyzing */}
+              <div
+                className={`transition-all duration-300 ${isAnalyzing && uploadedFile ? "blur-sm opacity-50 pointer-events-none" : ""}`}
+              >
+                {/* Score Ring */}
+                {analysisResult ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 1.4 }}
+                    key={`score-${uploadedFile?.name}`}
+                  >
+                    <ScoreRing
+                      score={analysisResult}
+                      animated={animatedScore}
+                    />
+                  </motion.div>
+                ) : (
+                  /* Empty State */
+                  <div className="flex-1 flex items-center justify-center min-h-[300px]">
+                    <div className="rounded-2xl border-2 border-dashed border-slate-100 p-8 text-center w-full">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-3">
+                        <Target size={28} className="text-slate-200" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-400 mb-1">
+                        No resume uploaded yet
+                      </p>
+                      <p className="text-xs text-slate-300">
+                        Upload a resume on the right to see your ATS score here
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-    {/* Section Scores */}
-    {analysisResult?.sectionScores?.length > 0 && (
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        transition={{ delay: 0.3 }} 
-        className="mt-5"
-      >
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Section Breakdown</p>
-        {analysisResult.sectionScores.map((s, i) => (
-          <SectionCard key={`${s.sectionName}-${i}-${uploadedFile?.name}`} section={s} />
-        ))}
-      </motion.div>
-    )}
+                {/* Section Scores */}
+                {analysisResult?.sectionScores?.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="mt-5"
+                  >
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+                      Section Breakdown
+                    </p>
+                    {analysisResult.sectionScores.map((s, i) => (
+                      <SectionCard
+                        key={`${s.sectionName}-${i}-${uploadedFile?.name}`}
+                        section={s}
+                      />
+                    ))}
+                  </motion.div>
+                )}
 
-    {/* Error Tables */}
-    <AnimatePresence>
-      {spellingErrors.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-          <ErrorTable errors={spellingErrors} type="spell" onSelect={setActiveError} />
-        </motion.div>
-      )}
-      {pronounErrors.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-          <ErrorTable errors={pronounErrors} type="pronoun" onSelect={setActiveError} />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </div>
+                {/* Error Tables */}
+                <AnimatePresence>
+                  {spellingErrors.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <ErrorTable
+                        errors={spellingErrors}
+                        type="spell"
+                        onSelect={setActiveError}
+                      />
+                    </motion.div>
+                  )}
+                  {pronounErrors.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <ErrorTable
+                        errors={pronounErrors}
+                        type="pronoun"
+                        onSelect={setActiveError}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-  {/* 🌀 BLUR OVERLAY - Shows during analysis */}
-  <AnimatePresence>
-    {isAnalyzing && uploadedFile && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-10 rounded-xl"
-      >
-        {/* Animated Loader */}
-        <div className="relative">
-          {/* Outer ring */}
-          <motion.div
-            className="w-16 h-16 rounded-full border-4 border-slate-200"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            style={{ borderTopColor: '#3b82f6', borderRightColor: '#8b5cf6' }}
-          />
-          {/* Inner pulse */}
-          <motion.div
-            className="absolute inset-3 rounded-full bg-gradient-to-br from-blue-500 to-purple-500"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          />
-          {/* Sparkle icon */}
-          <Sparkles className="absolute inset-0 m-auto text-white" size={20} />
-        </div>
+                {/* Suggestions Panel */}
+                {analysisResult?.suggestions?.length > 0 && (
+                  <SuggestionsPanel suggestions={analysisResult.suggestions} />
+                )}
 
-        {/* Status Text */}
-        <div className="mt-6 text-center">
-          <motion.p 
-            className="text-base font-semibold text-slate-800"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Analyzing Resume
-          </motion.p>
-          
-          {/* Animated dots */}
-          <div className="flex items-center justify-center gap-1 mt-1">
-            {[0, 1, 2].map((i) => (
-              <motion.span
-                key={i}
-                className="w-2 h-2 rounded-full bg-blue-500"
-                initial={{ opacity: 0.4, scale: 0.8 }}
-                animate={{ 
-                  opacity: [0.4, 1, 0.4],
-                  scale: [0.8, 1.2, 0.8]
-                }}
-                transition={{ 
-                  duration: 1.2, 
-                  repeat: Infinity, 
-                  delay: i * 0.2,
-                  ease: "easeInOut"
-                }}
-              />
-            ))}
-          </div>
-          
-          <motion.p 
-            className="text-xs text-slate-500 mt-3 max-w-[200px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            Checking keywords, formatting & ATS compatibility
-          </motion.p>
-        </div>
+                {/* Job Roles Panel */}
+                {analysisResult?.jobRoles?.length > 0 && (
+                  <JobRolesPanel roles={analysisResult.jobRoles} />
+                )}
+              </div>
 
-        {/* Progress hint */}
-        <motion.div 
-          className="mt-4 flex items-center gap-2 text-xs text-slate-400"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          <Shield size={12} className="text-emerald-500" />
-          <span>AI-powered analysis in progress</span>
-        </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
+              {/* 🌀 BLUR OVERLAY - Shows during analysis */}
+              <AnimatePresence>
+                {isAnalyzing && uploadedFile && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-10 rounded-xl"
+                  >
+                    {/* Animated Loader */}
+                    <div className="relative">
+                      {/* Outer ring */}
+                      <motion.div
+                        className="w-16 h-16 rounded-full border-4 border-slate-200"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        style={{
+                          borderTopColor: "#3b82f6",
+                          borderRightColor: "#8b5cf6",
+                        }}
+                      />
+                      {/* Inner pulse */}
+                      <motion.div
+                        className="absolute inset-3 rounded-full bg-gradient-to-br from-blue-500 to-purple-500"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      />
+                      {/* Sparkle icon */}
+                      <Sparkles
+                        className="absolute inset-0 m-auto text-white"
+                        size={20}
+                      />
+                    </div>
 
-  {/* CSS for animations */}
-  <style>{`
+                    {/* Status Text */}
+                    <div className="mt-6 text-center">
+                      <motion.p
+                        className="text-base font-semibold text-slate-800"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        Analyzing Resume
+                      </motion.p>
+
+                      {/* Animated dots */}
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        {[0, 1, 2].map((i) => (
+                          <motion.span
+                            key={i}
+                            className="w-2 h-2 rounded-full bg-blue-500"
+                            initial={{ opacity: 0.4, scale: 0.8 }}
+                            animate={{
+                              opacity: [0.4, 1, 0.4],
+                              scale: [0.8, 1.2, 0.8],
+                            }}
+                            transition={{
+                              duration: 1.2,
+                              repeat: Infinity,
+                              delay: i * 0.2,
+                              ease: "easeInOut",
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <motion.p
+                        className="text-xs text-slate-500 mt-3 max-w-[200px]"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        Checking keywords, formatting & ATS compatibility
+                      </motion.p>
+                    </div>
+
+                    {/* Progress hint */}
+                    <motion.div
+                      className="mt-4 flex items-center gap-2 text-xs text-slate-400"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                    >
+                      <Shield size={12} className="text-emerald-500" />
+                      <span>AI-powered analysis in progress</span>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* CSS for animations */}
+              <style>{`
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -868,7 +1287,7 @@ const handleFileChange = async (e) => {
       50% { opacity: 1; }
     }
   `}</style>
-</div>
+            </div>
           </div>
         </div>
 
@@ -899,24 +1318,30 @@ const handleFileChange = async (e) => {
                 className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col"
                 style={{ minHeight: PANEL_HEIGHT }}
               >
-               {previewUrl ? (
-  <div className="w-full flex-1" style={{ minHeight: PANEL_HEIGHT }}>
-    <ATSPdfPreview
-      pdfUrl={previewUrl}
-      onLoadSuccess={(pdf) => {
-        setNumPages(pdf.numPages);
-        setPdfInstance(pdf);
-      }}
-    />
-  </div>
-) : previewType === 'doc' && resumeText ? (
-  // Show DOC preview with extracted text
-  <div className="w-full flex-1" style={{ minHeight: PANEL_HEIGHT }}>
-    <ATSDocPreview text={resumeText} />
-  </div>
-) : (
-  <UploadZone onFileChange={handleFileChange} />
-)}
+                {previewUrl ? (
+                  <div
+                    className="w-full flex-1"
+                    style={{ minHeight: PANEL_HEIGHT }}
+                  >
+                    <ATSPdfPreview
+                      pdfUrl={previewUrl}
+                      onLoadSuccess={(pdf) => {
+                        setNumPages(pdf.numPages);
+                        setPdfInstance(pdf);
+                      }}
+                    />
+                  </div>
+                ) : previewType === "doc" && resumeText ? (
+                  // Show DOC preview with extracted text
+                  <div
+                    className="w-full flex-1"
+                    style={{ minHeight: PANEL_HEIGHT }}
+                  >
+                    <ATSDocPreview text={resumeText} />
+                  </div>
+                ) : (
+                  <UploadZone onFileChange={handleFileChange} />
+                )}
               </motion.div>
             )}
           </AnimatePresence>

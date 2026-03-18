@@ -169,6 +169,7 @@ const CoverLetterPreview = forwardRef(
   (
     {
       formData = {},
+      documentTitle = "",
       exportDate = new Date().toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
@@ -224,7 +225,35 @@ const CoverLetterPreview = forwardRef(
     /* ── Expose downloadPDF to parent via ref ────────────────────────────── */
     useImperativeHandle(ref, () => ({
       downloadPDF: () => downloadPDF(),
+      captureHTML: () => captureHTML(),
     }));
+
+    /* ── Capture HTML ─────────────────────────────────────────────────────── */
+    const captureHTML = async () => {
+      let container;
+      try {
+        container = document.createElement("div");
+        Object.assign(container.style, {
+          position: "fixed",
+          top: "0",
+          left: "-9999px",
+          width: `${PAGE_WIDTH}px`,
+          background: "#ffffff",
+          zIndex: "-1",
+        });
+        document.body.appendChild(container);
+        const { createRoot } = await import("react-dom/client");
+        await new Promise((resolve) => {
+          const root = createRoot(container);
+          root.render(<CoverContent />);
+          setTimeout(resolve, 400);
+        });
+        return container.innerHTML;
+      } finally {
+        if (container && container.parentNode)
+          document.body.removeChild(container);
+      }
+    };
 
     /* ── PDF Download ─────────────────────────────────────────────────────── */
     const downloadPDF = async () => {
@@ -313,9 +342,9 @@ const CoverLetterPreview = forwardRef(
             .trim()
             .replace(/\s+/g, "_");
 
-        const name = clean(fullName) || "CoverLetter";
+        const name = clean(documentTitle) || clean(fullName) || "CoverLetter";
 
-        pdf.save(`${name}_Cover_Letter.pdf`);
+        pdf.save(`coverletter_${name}.pdf`);
       } catch (err) {
         console.error("PDF download error:", err);
       } finally {
@@ -333,11 +362,8 @@ const CoverLetterPreview = forwardRef(
             position: "relative",
             width: "100%",
             margin: "0 auto",
-            /* ── Word-standard margins ──────────────────────────────────────
-               A4 at 96 DPI = 794 px wide.
-               1.25 in left + 1.25 in right = 240 px → content width ≈ 554 px
-               1 in top + 1 in bottom = 96 px each                          */
-            padding: "96px 120px",
+
+            padding: "60px 70px",
             fontFamily: "'Times New Roman', Times, serif",
             fontSize: "12pt",
             lineHeight: "1.5" /* Word default single-spacing */,

@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import {
+  generateWordFromReactElement,
+  sanitiseFilename,
+} from "../../../utils/wordExport";
 import { useNavigate } from "react-router-dom";
 import FormTabs from "./FormTabs";
 import UserNavBar from "../UserNavBar/UserNavBar";
@@ -189,7 +193,7 @@ const CVBuilder = () => {
         sanitize(documentTitle) || sanitize(displayData.fullName) || "Document";
 
       await axiosInstance.post("/api/downloads", {
-        name: `CV - ${nameToUse}`,
+        name: `cv_${nameToUse}`,
         type: "cv",
         action,
         format: "PDF",
@@ -285,7 +289,7 @@ const CVBuilder = () => {
       const displayData = mergeWithSampleData(formData);
       const nameToUse = documentTitle || displayData.fullName || "Document";
       await axiosInstance.post("/api/downloads", {
-        name: `CV - ${nameToUse}`,
+        name: `cv_${nameToUse}`,
         type: "cv",
         format,
         html,
@@ -386,48 +390,52 @@ const CVBuilder = () => {
     }
 
     setIsDownloading(true);
-    const container = document.createElement("div");
-    Object.assign(container.style, {
-      position: "fixed",
-      top: "0",
-      left: "-9999px",
-      width: `${PDF_PAGE_WIDTH_PX}px`,
-      background: "#ffffff",
-    });
-    document.body.appendChild(container);
 
     try {
-      const { createRoot } = await import("react-dom/client");
       const displayData = mergeWithSampleData(formData);
-      await new Promise((resolve) => {
-        const root = createRoot(container);
-        root.render(<TemplateComponent formData={displayData} />);
-        setTimeout(resolve, 400);
-      });
+      const baseName =
+        sanitiseFilename(documentTitle) ||
+        sanitiseFilename(displayData.fullName) ||
+        "CV";
+      const filename = `cv_${baseName}`;
 
-      const bodyHtml = container.innerHTML;
-      const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>CV</title></head><body>${bodyHtml}</body></html>`;
-      const blob = new Blob(["\uFEFF", wordHtml], {
-        type: "application/msword",
+      // Render into a temporary off-screen container so we can
+      // capture both the HTML (for preview storage) and the canvas image.
+      const container = document.createElement("div");
+      Object.assign(container.style, {
+        position: "fixed",
+        top: "0",
+        left: "-9999px",
+        width: `${PDF_PAGE_WIDTH_PX}px`,
+        background: "#ffffff",
+        zIndex: "-1",
       });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const clean = (s) =>
-        (s || "")
-          .replace(/[^a-z0-9_\- ]/gi, "")
-          .trim()
-          .replace(/\s+/g, "_");
-      a.download = `${clean(documentTitle) || clean(formData.fullName) || "CV"}.doc`;
-      a.click();
-      URL.revokeObjectURL(url);
+      document.body.appendChild(container);
+
+      let bodyHtml = "";
+      try {
+        const { createRoot } = await import("react-dom/client");
+        await new Promise((resolve) => {
+          const root = createRoot(container);
+          root.render(<TemplateComponent formData={displayData} />);
+          setTimeout(resolve, 500);
+        });
+        bodyHtml = container.innerHTML;
+
+        // Generate and save the pixel-perfect .docx
+        const { generateWordFromElement } =
+          await import("../../../utils/wordExport");
+        await generateWordFromElement(container, filename);
+      } finally {
+        document.body.removeChild(container);
+      }
+
       await saveDownloadRecord(bodyHtml, "DOCX");
       toast.success("CV downloaded as Word!");
     } catch (err) {
       console.error("Word download error:", err);
       toast.error("Failed to download Word.");
     } finally {
-      document.body.removeChild(container);
       setIsDownloading(false);
     }
   };
