@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axiosInstance from "../../../api/axios";
 import { generateWordFromHtml } from "../../../utils/wordExport";
+import { trackResumeActivity } from "../../../services/activityService";
 import {
   FiDownload,
   FiFile,
@@ -206,6 +207,11 @@ const Downloads = () => {
       if (download.format === "DOCX") {
         // Generate a pixel-perfect .docx from the stored HTML snapshot
         await generateWordFromHtml(html, fileName);
+        await trackResumeActivity({
+          type: "downloaded",
+          resumeName: download.name || "Untitled Resume",
+          documentType: download.type || "resume",
+        });
         return;
       }
 
@@ -273,6 +279,11 @@ const Downloads = () => {
       }
 
       pdf.save(`${fileName}.pdf`);
+      await trackResumeActivity({
+        type: "downloaded",
+        resumeName: download.name || "Untitled Resume",
+        documentType: download.type || "resume",
+      });
       document.body.removeChild(container);
     } catch (err) {
       console.error("Download failed:", err);

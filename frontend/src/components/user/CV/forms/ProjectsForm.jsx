@@ -8,11 +8,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { getCompletionStatus } from "../completion";
-import axiosInstance from "../../../../api/axios";
+import { aiService } from "../../../../services/aiService";
 
 const ProjectsForm = ({ formData, setFormData }) => {
   const [editingId, setEditingId] = useState(null);
   const [generatingId, setGeneratingId] = useState(null);
+  const [aiErrorById, setAiErrorById] = useState({});
 
   useEffect(() => {
     // Only auto-open the first project on initial mount if there are no valid projects.
@@ -20,7 +21,10 @@ const ProjectsForm = ({ formData, setFormData }) => {
     // unexpectedly collapsing (submitting) while the user is actively typing.
     if (editingId === null) {
       const { sectionValidationStatus } = getCompletionStatus(formData);
-      if (!sectionValidationStatus.hasValidProject && formData?.projects?.length > 0) {
+      if (
+        !sectionValidationStatus.hasValidProject &&
+        formData?.projects?.length > 0
+      ) {
         setEditingId(formData.projects[0].id);
       }
     }
@@ -65,16 +69,30 @@ const ProjectsForm = ({ formData, setFormData }) => {
       ...prev,
       projects: (prev?.projects ?? []).map((p) => {
         if (p.id !== id) return p;
-        const currentLink = typeof p.link === 'string' ? { github: p.link } : (p.link || {});
+        const currentLink =
+          typeof p.link === "string" ? { github: p.link } : p.link || {};
         return { ...p, link: { ...currentLink, github: value } };
       }),
+    }));
+  };
+
+  const setProjectAiError = (projectId, message) => {
+    setAiErrorById((prev) => ({
+      ...prev,
+      [projectId]: message,
     }));
   };
 
   const generateProjectDetails = async (projectId) => {
     try {
       setGeneratingId(projectId);
+      setProjectAiError(projectId, "");
       const project = formData.projects.find((p) => p.id === projectId);
+      if (!project) {
+        setProjectAiError(projectId, "Project not found.");
+        return;
+      }
+
       const data = {
         id: projectId,
         name: project?.name || "",
@@ -82,26 +100,28 @@ const ProjectsForm = ({ formData, setFormData }) => {
         description: project?.description ?? "",
       };
 
-      if (!data.name || !data.description) {
-        alert(
-          "Please fill in the Project Name and Description fields before enhancing with AI.",
+      if (!data.name.trim() || !data.description.trim()) {
+        setProjectAiError(
+          projectId,
+          "Please enter project title and description before using Enhance with AI.",
         );
-        setGeneratingId(null);
         return;
       }
 
-      const response = await axiosInstance.post(
-        "/api/resume/enhance-project-description",
-        data,
-      );
+      const enhancedDescription =
+        await aiService.enhanceProjectDescription(data);
+      if (!enhancedDescription?.trim()) {
+        setProjectAiError(
+          projectId,
+          "AI could not generate project content. Please try again.",
+        );
+        return;
+      }
 
-      updateProject(projectId, "description", response.data.projectDescription);
+      updateProject(projectId, "description", enhancedDescription);
     } catch (error) {
       console.error("Failed to generate description:", error);
-      alert(
-        `Failed to generate description: ${error.response?.data?.error || error.message
-        }`,
-      );
+      setProjectAiError(projectId, aiService.getErrorMessage(error));
     } finally {
       setGeneratingId(null);
     }
@@ -152,9 +172,15 @@ const ProjectsForm = ({ formData, setFormData }) => {
                   </div>
                 )}
 
-                {(typeof project?.link === 'string' ? project.link : project?.link?.github) && (
+                {(typeof project?.link === "string"
+                  ? project.link
+                  : project?.link?.github) && (
                   <a
-                    href={typeof project?.link === 'string' ? project.link : project?.link?.github}
+                    href={
+                      typeof project?.link === "string"
+                        ? project.link
+                        : project?.link?.github
+                    }
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs text-blue-600 mt-1 inline-block"
@@ -224,6 +250,11 @@ const ProjectsForm = ({ formData, setFormData }) => {
                   <span className="ml-2 text-xs text-slate-500">
                     {project.description?.length || 0}/1000 Characters
                   </span>
+                  {aiErrorById[project.id] && (
+                    <p className="ml-2 text-xs text-red-500 font-medium">
+                      {aiErrorById[project.id]}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5 mb-4">
@@ -231,7 +262,11 @@ const ProjectsForm = ({ formData, setFormData }) => {
                   <input
                     type="text"
                     className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all bg-white"
-                    value={(typeof project?.link === 'string' ? project.link : project?.link?.github) || ""}
+                    value={
+                      (typeof project?.link === "string"
+                        ? project.link
+                        : project?.link?.github) || ""
+                    }
                     placeholder="github.com/username/project"
                     onChange={(e) => updateGithub(project.id, e.target.value)}
                   />

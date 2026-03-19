@@ -21,13 +21,11 @@ import {
   Activity,
 } from "lucide-react";
 
+import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import {
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
-} from "recharts";
+  getRecentActivities,
+  getActivityLabel,
+} from "../../../services/activityService";
 
 import "./Dashboard.css";
 
@@ -37,38 +35,77 @@ const timeAgo = (dateStr) => {
   if (isNaN(date.getTime())) return "";
   const seconds = Math.floor((new Date() - date) / 1000);
   let interval = seconds / 31536000;
-  if (interval > 1) return Math.floor(interval) + " years ago";
+  if (interval >= 1) return Math.floor(interval) + " years ago";
   interval = seconds / 2592000;
-  if (interval > 1) return Math.floor(interval) + " months ago";
+  if (interval >= 1) return Math.floor(interval) + " months ago";
   interval = seconds / 86400;
-  if (interval > 1) return Math.floor(interval) + " days ago";
+  if (interval >= 1) return Math.floor(interval) + " days ago";
   interval = seconds / 3600;
-  if (interval > 1) return Math.floor(interval) + " hours ago";
+  if (interval >= 1) return Math.floor(interval) + " hours ago";
   interval = seconds / 60;
-  if (interval > 1) return Math.floor(interval) + " mins ago";
+  if (interval >= 1) return Math.floor(interval) + " mins ago";
   return "just now";
 };
 
-const HorizontalStatCard = ({ icon: Icon, label, value, subtext, iconColor, iconBg }) => (
+const HorizontalStatCard = ({
+  icon: Icon,
+  label,
+  value,
+  subtext,
+  iconColor,
+  iconBg,
+}) => (
   <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col items-center justify-center text-center group">
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${iconBg} ${iconColor} group-hover:scale-110 transition-transform`}>
+    <div
+      className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${iconBg} ${iconColor} group-hover:scale-110 transition-transform`}
+    >
       <Icon className="w-5 h-5" />
     </div>
-    <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 line-clamp-1">{label}</span>
-    <h4 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">{value}</h4>
-    <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate w-full px-1 flex-shrink-0" title={String(subtext)}>{subtext}</span>
+    <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 line-clamp-1">
+      {label}
+    </span>
+    <h4 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">
+      {value}
+    </h4>
+    <span
+      className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate w-full px-1 flex-shrink-0"
+      title={String(subtext)}
+    >
+      {subtext}
+    </span>
   </div>
 );
 
 const ActivityItem = ({ activity }) => {
   const getIconConfig = (type) => {
     switch (type) {
-      case 'created': return { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50' };
-      case 'edited': return { icon: PenLine, color: 'text-orange-500', bg: 'bg-orange-50' };
-      case 'download': return { icon: Download, color: 'text-emerald-500', bg: 'bg-emerald-50' };
-      case 'scan': return { icon: CheckCircle, color: 'text-indigo-500', bg: 'bg-indigo-50' };
-      case 'improved': return { icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-50' };
-      default: return { icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50' };
+      case "created":
+        return { icon: FileText, color: "text-blue-500", bg: "bg-blue-50" };
+      case "edited":
+      case "updated":
+        return { icon: PenLine, color: "text-orange-500", bg: "bg-orange-50" };
+      case "download":
+        return {
+          icon: Download,
+          color: "text-emerald-500",
+          bg: "bg-emerald-50",
+        };
+      case "downloaded":
+        return {
+          icon: Download,
+          color: "text-emerald-500",
+          bg: "bg-emerald-50",
+        };
+      case "scan":
+        return {
+          icon: CheckCircle,
+          color: "text-indigo-500",
+          bg: "bg-indigo-50",
+        };
+      case "improved":
+        return { icon: Sparkles, color: "text-purple-500", bg: "bg-purple-50" };
+      default:
+        return { icon: FileText, color: "text-slate-500", bg: "bg-slate-50" };
     }
   };
 
@@ -76,17 +113,16 @@ const ActivityItem = ({ activity }) => {
 
   return (
     <div className="relative pl-6">
-      <div className={`absolute -left-[17px] top-1 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center ${bg} shadow-sm z-10`}>
+      <div
+        className={`absolute -left-[17px] top-1 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center ${bg} shadow-sm z-10`}
+      >
         <Icon className={`w-3.5 h-3.5 ${color}`} />
       </div>
       <div className="pr-2 pb-1 relative top-0.5">
         <p className="text-sm font-semibold text-slate-700">{activity.label}</p>
-        {activity.docTitle && (
-          <p className="text-[13px] text-slate-500 mt-0.5 max-w-full truncate">
-            {activity.docTitle}
-          </p>
-        )}
-        <p className="text-[11px] text-slate-400 mt-1 font-medium">{timeAgo(activity.time)}</p>
+        <p className="text-[11px] text-slate-400 mt-1 font-medium">
+          {timeAgo(activity.time)}
+        </p>
       </div>
     </div>
   );
@@ -97,6 +133,7 @@ const Dashboard = ({ setActivePage }) => {
 
   const [dashboardData, setDashboardData] = useState(null);
   const [summaryData, setSummaryData] = useState(null);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [requestLoading, setRequestLoading] = useState(false);
@@ -119,24 +156,41 @@ const Dashboard = ({ setActivePage }) => {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadRecentActivity = async () => {
+      try {
+        const items = await getRecentActivities({ limit: 20 });
+        if (isMounted) {
+          setActivities(items);
+        }
+      } catch (err) {
+        console.error("Recent activity fetch failed", err);
+        if (isMounted) {
+          setActivities([]);
+        }
+      }
+    };
+
     const fetchDashboard = async () => {
       try {
         setLoading(true);
         const [userRes, summaryRes] = await Promise.all([
           axiosInstance.get("/api/user/dashboard"),
-          axiosInstance.get("/api/dashboard/summary") // Remove Authorization header for Java backend
+          axiosInstance.get("/api/dashboard/summary"), // Remove Authorization header for Java backend
         ]);
-        
+
         // Handle Java backend response structure: {success, message, data}
         const dashboardUserData = userRes.data.data || userRes.data.user; // Fallback for MERN backend
         if (dashboardUserData) {
           setDashboardData(dashboardUserData);
         }
-        
+
         // Handle summary response (might be from different backend)
         const summaryDataResponse = summaryRes.data.data || summaryRes.data;
         setSummaryData(summaryDataResponse);
-        
+        await loadRecentActivity();
+
         setError(null);
       } catch (err) {
         console.error("Dashboard fetch failed", err);
@@ -152,6 +206,13 @@ const Dashboard = ({ setActivePage }) => {
     };
 
     fetchDashboard();
+    loadRecentActivity();
+    window.addEventListener("resume-activity-updated", loadRecentActivity);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("resume-activity-updated", loadRecentActivity);
+    };
   }, []);
 
   if (loading) {
@@ -200,9 +261,11 @@ const Dashboard = ({ setActivePage }) => {
 
   const avgAtsScore = stats.avgAtsScore || 0;
   // Document breakdown counts (per logged-in user)
-  const resumesCreatedCount = stats.resumesCreated || 0;
-  const cvsCreatedCount = stats.cvsCreated || 0;
-  const coverLettersCreatedCount = stats.coverLettersCreated || 0;
+  const resumesCreatedCount =
+    stats.resumesCreated ?? summaryData?.resumesCreated ?? 0;
+  const cvsCreatedCount = stats.cvsCreated ?? summaryData?.cvsCreated ?? 0;
+  const coverLettersCreatedCount =
+    stats.coverLettersCreated ?? summaryData?.coverLettersCreated ?? 0;
   const totalAssets =
     resumesCreatedCount + cvsCreatedCount + coverLettersCreatedCount;
 
@@ -408,24 +471,44 @@ const Dashboard = ({ setActivePage }) => {
             <HorizontalStatCard
               icon={CheckCircle}
               label="Avg ATS Score"
-              value={summaryData?.avgAtsScore > 0 ? summaryData.avgAtsScore : "0"}
-              subtext={summaryData?.avgAtsScore > 0 ? "Out of 100" : "No scans yet"}
+              value={
+                summaryData?.avgAtsScore > 0 ? summaryData.avgAtsScore : "0"
+              }
+              subtext={
+                summaryData?.avgAtsScore > 0 ? "Out of 100" : "No scans yet"
+              }
               iconColor="text-emerald-600"
               iconBg="bg-emerald-50"
             />
             <HorizontalStatCard
               icon={Download}
               label="Total Downloads"
-              value={summaryData?.totalDownloads > 0 ? summaryData.totalDownloads : "0"}
-              subtext={summaryData?.totalDownloads > 0 ? "All time" : "No downloads yet"}
+              value={
+                summaryData?.totalDownloads > 0
+                  ? summaryData.totalDownloads
+                  : "0"
+              }
+              subtext={
+                summaryData?.totalDownloads > 0
+                  ? "All time"
+                  : "No downloads yet"
+              }
               iconColor="text-blue-600"
               iconBg="bg-blue-50"
             />
             <HorizontalStatCard
               icon={FileText}
               label="Last Edited"
-              value={summaryData?.lastEditedDoc ? timeAgo(summaryData.lastEditedDoc.updatedAt) : "None"}
-              subtext={summaryData?.lastEditedDoc ? summaryData.lastEditedDoc.title : "Create a resume"}
+              value={
+                summaryData?.lastEditedDoc
+                  ? timeAgo(summaryData.lastEditedDoc.updatedAt)
+                  : "None"
+              }
+              subtext={
+                summaryData?.lastEditedDoc
+                  ? summaryData.lastEditedDoc.title
+                  : "Create a resume"
+              }
               iconColor="text-orange-600"
               iconBg="bg-orange-50"
             />
@@ -441,20 +524,28 @@ const Dashboard = ({ setActivePage }) => {
               </h3>
 
               <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                {summaryData?.recentActivity && summaryData.recentActivity.length > 0 ? (
+                {activities.length > 0 ? (
                   <div className="relative border-l-2 border-slate-100 ml-3 space-y-6 pb-2">
-                    {summaryData.recentActivity.map((activity) => (
-                      <ActivityItem key={activity.id} activity={{
-                        ...activity,
-                        time: activity.timestamp
-                      }} />
+                    {activities.map((activity) => (
+                      <ActivityItem
+                        key={activity.id}
+                        activity={{
+                          ...activity,
+                          label: getActivityLabel(activity),
+                          time: activity.timestamp,
+                        }}
+                      />
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center h-full py-8 text-slate-500">
                     <Activity className="w-10 h-10 text-slate-300 mb-3" />
-                    <p className="font-medium text-slate-600">No recent activity</p>
-                    <p className="text-[13px] mt-1 text-slate-500">Create your first resume to see timeline</p>
+                    <p className="font-medium text-slate-600">
+                      No recent activity
+                    </p>
+                    <p className="text-[13px] mt-1 text-slate-500">
+                      Create your first resume to see timeline
+                    </p>
                   </div>
                 )}
               </div>
@@ -540,12 +631,13 @@ const Dashboard = ({ setActivePage }) => {
               <button
                 onClick={handleRequestAdmin}
                 disabled={adminRequestStatus === "pending" || requestLoading}
-                className={`px-4 py-2 text-sm rounded-lg font-medium transition-all shrink-0 whitespace-nowrap w-full sm:w-auto ${adminRequestStatus === "pending"
-                  ? "bg-amber-100 text-amber-700 cursor-not-allowed"
-                  : adminRequestStatus === "rejected"
-                    ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-                    : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
-                  }`}
+                className={`px-4 py-2 text-sm rounded-lg font-medium transition-all shrink-0 whitespace-nowrap w-full sm:w-auto ${
+                  adminRequestStatus === "pending"
+                    ? "bg-amber-100 text-amber-700 cursor-not-allowed"
+                    : adminRequestStatus === "rejected"
+                      ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                      : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+                }`}
               >
                 {adminRequestStatus === "pending"
                   ? "Request Pending"

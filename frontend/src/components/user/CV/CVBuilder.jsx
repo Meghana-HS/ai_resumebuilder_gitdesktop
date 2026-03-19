@@ -6,10 +6,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import FormTabs from "./FormTabs";
 import UserNavBar from "../UserNavBar/UserNavBar";
-import axios from "axios";
 import axiosInstance from "../../../api/axios";
 import { toast } from "react-hot-toast";
 import { ArrowRight, X } from "lucide-react";
+import { trackResumeActivity } from "../../../services/activityService";
 
 import { getCompletionStatus } from "../ResumeBuilder/completion";
 import ResumeCompletionBanner from "./ResumeCompletionBanner";
@@ -297,6 +297,11 @@ const CVBuilder = () => {
         template: selectedTemplate,
         size: format === "PDF" ? "250 KB" : "200 KB",
       });
+      await trackResumeActivity({
+        type: "downloaded",
+        resumeName: nameToUse,
+        documentType: "cv",
+      });
     } catch (err) {
       console.error("Failed to save CV download:", err);
     }
@@ -541,8 +546,7 @@ const CVBuilder = () => {
 
     (async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/resume", {
-          withCredentials: true,
+        const res = await axiosInstance.get("/api/resume", {
           signal: controller.signal,
         });
 
@@ -583,6 +587,7 @@ const CVBuilder = () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
+      const isUpdate = Boolean(resumeId);
       const payload = {
         title: formData.fullName
           ? `${formData.fullName}'s Resume`
@@ -591,19 +596,19 @@ const CVBuilder = () => {
         data: formData,
       };
       if (resumeId) {
-        await axios.put(
-          `http://localhost:5000/api/resume/${resumeId}`,
-          payload,
-          { withCredentials: true },
-        );
+        await axiosInstance.put(`/api/resume/${resumeId}`, payload);
       } else {
-        const res = await axios.post(
-          `http://localhost:5000/api/resume`,
-          payload,
-          { withCredentials: true },
-        );
-        setResumeId(res.data?._id);
+        const res = await axiosInstance.post(`/api/resume`, payload);
+        const newResumeId = res.data?.data?._id || res.data?._id;
+        if (newResumeId) {
+          setResumeId(newResumeId);
+        }
       }
+      await trackResumeActivity({
+        type: isUpdate ? "updated" : "created",
+        resumeName: payload.title,
+        documentType: "cv",
+      });
       await saveCVToDownloads();
       toast.success("Resume saved!");
     } catch (err) {

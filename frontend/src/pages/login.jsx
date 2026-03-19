@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
 import { useNavigate, Link } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import images from "../assets";
 
 export default function Login() {
@@ -16,19 +16,19 @@ export default function Login() {
 
   // Auto login (checks both localStorage & sessionStorage)
   // Auto login ONLY for Remember Me users
-useEffect(() => {
-  const token = localStorage.getItem("token");
+  useEffect(() => {
+    const token = localStorage.getItem("token");
 
-  if (token) {
-    const isAdmin = JSON.parse(localStorage.getItem("isAdmin") || "false");
+    if (token) {
+      const isAdmin = JSON.parse(localStorage.getItem("isAdmin") || "false");
 
-    if (isAdmin) {
-      navigate("/admin");
-    } else {
-      navigate("/user/dashboard");
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/user/dashboard");
+      }
     }
-  }
-}, [navigate]);
+  }, [navigate]);
 
   const validate = () => {
     if (!emailtext) {
@@ -43,59 +43,62 @@ useEffect(() => {
   };
 
   const handleLogin = async () => {
-  if (!validate()) return;
-  setLoading(true);
+    if (!validate()) return;
+    setLoading(true);
 
-  try {
-    const response = await axiosInstance.post("/api/auth/login", {
-      email: emailtext,
-      password: passwordtext,
-      rememberMe: rememberMe,
-    });
+    try {
+      const response = await axiosInstance.post("/api/auth/login", {
+        email: emailtext,
+        password: passwordtext,
+        rememberMe: rememberMe,
+      });
 
-    console.log("Login response:", response.data);
+      console.log("Login response:", response.data);
 
-    const isAdmin = response.data.isAdmin || false;
+      const loginData = response.data?.data || {};
+      const token = loginData.token;
+      const isAdmin = loginData.isAdmin || false;
 
-    // Storage logic based on Remember Me
-    if (rememberMe) {
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("isAdmin", JSON.stringify(isAdmin));
-
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("isAdmin");
-    } else {
-      sessionStorage.setItem("token", response.data.token);
-      sessionStorage.setItem("isAdmin", JSON.stringify(isAdmin));
-
-      localStorage.removeItem("token");
-      localStorage.removeItem("isAdmin");
-    }
-
-    setTimeout(() => {
-      if (isAdmin) {
-        toast.success("Welcome Admin!");
-        navigate("/admin");
-      } else {
-        const username = emailtext.split("@")[0];
-        toast.success(`Welcome back, ${username}!`);
-        navigate("/user/dashboard");
+      if (!token) {
+        throw new Error("Login succeeded but no token was returned.");
       }
-    }, 150);
 
-  } catch (error) {
-    console.log(error);
-    toast.error(
-      error?.response?.data?.message || "Login failed. Please try again."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      if (rememberMe) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("isAdmin", JSON.stringify(isAdmin));
 
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("isAdmin");
+      } else {
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("isAdmin", JSON.stringify(isAdmin));
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("isAdmin");
+      }
+
+      setTimeout(() => {
+        if (isAdmin) {
+          toast.success("Welcome Admin!");
+          navigate("/admin");
+        } else {
+          const username = emailtext.split("@")[0];
+          toast.success(`Welcome back, ${username}!`);
+          navigate("/user/dashboard");
+        }
+      }, 150);
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        error?.response?.data?.message || "Login failed. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleLogin();
     }
   };
@@ -112,8 +115,12 @@ useEffect(() => {
             className="w-full max-w-lg"
           />
           <div className="mt-12 text-center max-w-md">
-            <h2 className="text-3xl font-bold text-gray-800 mb-3">Build Your Future</h2>
-            <p className="text-lg text-gray-600">Create professional resumes with AI-powered tools</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-3">
+              Build Your Future
+            </h2>
+            <p className="text-lg text-gray-600">
+              Create professional resumes with AI-powered tools
+            </p>
           </div>
         </div>
 
@@ -121,8 +128,10 @@ useEffect(() => {
           <div className="max-w-md mx-auto w-full">
             <div className="mb-8 text-center">
               <h1 className="text-xl font-semibold text-gray-800">
-                Welcome to{' '}
-                <span className="font-bold text-blue-600">AI Resume Builder</span>
+                Welcome to{" "}
+                <span className="font-bold text-blue-600">
+                  AI Resume Builder
+                </span>
               </h1>
               <p className="text-xs text-gray-500 mt-1">by</p>
               <Link to="/" className="inline-block">
@@ -163,7 +172,7 @@ useEffect(() => {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={passwordtext}
                     onChange={(e) => setPasswordText(e.target.value)}
@@ -176,7 +185,11 @@ useEffect(() => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -189,9 +202,14 @@ useEffect(() => {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                  <span className="ml-2 text-sm text-gray-600">
+                    Remember me
+                  </span>
                 </label>
-                <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -201,8 +219,8 @@ useEffect(() => {
                 disabled={loading}
                 className={`w-full py-3 rounded-lg text-white font-semibold transition transform ${
                   loading
-                    ? 'bg-blue-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:scale-105'
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:scale-105"
                 }`}
               >
                 {loading ? "Signing in..." : "Sign In"}
@@ -210,8 +228,11 @@ useEffect(() => {
             </div>
 
             <p className="text-center text-sm text-gray-600 mt-6">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-blue-600 hover:text-blue-700 font-semibold"
+              >
                 Sign up
               </Link>
             </p>

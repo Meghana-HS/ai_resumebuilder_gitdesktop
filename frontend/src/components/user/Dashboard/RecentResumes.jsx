@@ -44,11 +44,16 @@ const RecentDocuments = () => {
         name: d.name,
         type: d.type,
         action: d.action || "download",
-        format: (d.format || (d.type === "cover-letter" ? "DOCX" : "PDF")).toUpperCase(),
+        format: (
+          d.format || (d.type === "cover-letter" ? "DOCX" : "PDF")
+        ).toUpperCase(),
         template: d.template,
         size: d.size || "200 KB",
         downloadDate:
-          d.downloadDate || d.createdAt || d.updatedAt || new Date().toISOString(),
+          d.downloadDate ||
+          d.createdAt ||
+          d.updatedAt ||
+          new Date().toISOString(),
       }));
 
       const sorted = docs.sort(
@@ -133,7 +138,8 @@ const RecentDocuments = () => {
   };
 
   const getActionMeta = (action) => ACTION_META[action] || ACTION_META.download;
-  const getTypeMeta = (type) => TYPE_META[type] || { label: type || "Document", icon: <FiFile /> };
+  const getTypeMeta = (type) =>
+    TYPE_META[type] || { label: type || "Document", icon: <FiFile /> };
 
   /* ---------------- LOADING ---------------- */
   if (loading) {
@@ -204,7 +210,9 @@ const RecentDocuments = () => {
                   <span className="font-semibold text-gray-700">
                     {actionMeta.label}
                   </span>
-                  <span className="text-gray-400">• {formatDate(doc.downloadDate)}</span>
+                  <span className="text-gray-400">
+                    • {formatDate(doc.downloadDate)}
+                  </span>
                 </div>
 
                 <div className="flex gap-2 mt-4">

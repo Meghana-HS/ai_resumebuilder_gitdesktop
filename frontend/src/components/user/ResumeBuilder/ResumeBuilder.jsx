@@ -38,6 +38,7 @@ import { dummyData } from "./dummyData";
 
 import UserNavbar from "../UserNavBar/UserNavBar";
 import CVBuilderTopBar from "../CV/Cvbuildernavbar";
+import { trackResumeActivity } from "../../../services/activityService";
 
 /* ─────────────────────────────────────────────────────────
    FLOATING FORM PANEL (mirrors CVBuilder behavior)
@@ -157,6 +158,16 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
   /* -------------------- PREVIEW STATE -------------------- */
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const [isPreviewHidden, setIsPreviewHidden] = useState(false);
+  const lastUpdatedActivityRef = useRef(0);
+
+  const getResumeDisplayName = () => {
+    const sanitize = (s) => (s || "").replace(/[^a-z0-9 _-]/gi, "").trim();
+    return (
+      sanitize(documentTitle) ||
+      sanitize(formData.fullName) ||
+      "Untitled Resume"
+    );
+  };
 
   /* -------------------- ACTIVITY LOGGING -------------------- */
   const logActivity = async (action = "visited", html = "") => {
@@ -194,9 +205,35 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
 
   // edited (debounced)
   useEffect(() => {
-    const timer = setTimeout(() => logActivity("edited"), 4000);
+    const timer = setTimeout(async () => {
+      await logActivity("edited");
+
+      const resumeName = getResumeDisplayName();
+      const createdKey = "resume-builder-created";
+
+      if (!sessionStorage.getItem(createdKey)) {
+        await trackResumeActivity({
+          type: "created",
+          resumeName,
+          documentType: "resume",
+        });
+        sessionStorage.setItem(createdKey, "true");
+        lastUpdatedActivityRef.current = Date.now();
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastUpdatedActivityRef.current >= 60000) {
+        await trackResumeActivity({
+          type: "updated",
+          resumeName,
+          documentType: "resume",
+        });
+        lastUpdatedActivityRef.current = now;
+      }
+    }, 4000);
     return () => clearTimeout(timer);
-  }, [formData, selectedTemplate]);
+  }, [formData, selectedTemplate, documentTitle]);
 
   // preview open
   useEffect(() => {
@@ -427,6 +464,11 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
       }
 
       await GenerateResumePDF();
+      await trackResumeActivity({
+        type: "downloaded",
+        resumeName: getResumeDisplayName(),
+        documentType: "resume",
+      });
 
       try {
         const sanitize = (s) =>
@@ -490,6 +532,11 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
 
       // Pixel-perfect .docx — same canvas pipeline as the PDF
       await generateWordFromElement(container, filename);
+      await trackResumeActivity({
+        type: "downloaded",
+        resumeName: getResumeDisplayName(),
+        documentType: "resume",
+      });
 
       // Save download record
       try {

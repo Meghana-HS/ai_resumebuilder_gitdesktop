@@ -39,6 +39,7 @@ import UserNavBar from "../UserNavBar/UserNavBar";
 import CVBuilderTopBar from "../CV/Cvbuildernavbar";
 
 import axiosInstance from "../../../api/axios";
+import { trackResumeActivity } from "../../../services/activityService";
 
 import { getCompletionStatus } from "../ResumeBuilder/completion";
 
@@ -210,6 +211,7 @@ const CoverLetterBuilder = () => {
   const [aiTone, setAiTone] = useState("professional");
 
   const [documentTitle, setDocumentTitle] = useState("");
+  const lastUpdatedActivityRef = useRef(0);
 
   const date = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -226,6 +228,11 @@ const CoverLetterBuilder = () => {
       document.body.style.overflow = "";
     };
   }, [showMobilePreview]);
+
+  const getCoverLetterDisplayName = () =>
+    documentTitle?.trim() ||
+    formData.fullName?.trim() ||
+    "Untitled Cover Letter";
 
   useEffect(() => {
     const saveEditActivity = async () => {
@@ -264,6 +271,15 @@ const CoverLetterBuilder = () => {
       const html = container.innerHTML;
 
       await saveRecentActivity(html, "edited");
+      const now = Date.now();
+      if (now - lastUpdatedActivityRef.current >= 60000) {
+        await trackResumeActivity({
+          type: "updated",
+          resumeName: getCoverLetterDisplayName(),
+          documentType: "cover-letter",
+        });
+        lastUpdatedActivityRef.current = now;
+      }
 
       document.body.removeChild(container);
     };
@@ -271,7 +287,7 @@ const CoverLetterBuilder = () => {
     const timer = setTimeout(saveEditActivity, 5000);
 
     return () => clearTimeout(timer);
-  }, [formData, selectedTemplate]);
+  }, [formData, selectedTemplate, documentTitle]);
 
   // Measure sticky navbar height for floating offset
 
@@ -413,6 +429,11 @@ const CoverLetterBuilder = () => {
       const html = container.innerHTML;
 
       await saveRecentActivity(html, "visited");
+      await trackResumeActivity({
+        type: "visited",
+        resumeName: getCoverLetterDisplayName(),
+        documentType: "cover-letter",
+      });
 
       document.body.removeChild(container);
 
@@ -500,6 +521,11 @@ const CoverLetterBuilder = () => {
       if (previewRef.current?.downloadPDF) {
         await previewRef.current.downloadPDF();
         await saveDownloadRecord(capturedHtml, "PDF");
+        await trackResumeActivity({
+          type: "downloaded",
+          resumeName: getCoverLetterDisplayName(),
+          documentType: "cover-letter",
+        });
       } else {
         alert("Preview not ready. Please try again.");
       }
@@ -838,6 +864,11 @@ ${
 
       // Persist the download record so it appears on the Downloads page
       await saveDownloadRecord(capturedHtml, "DOCX");
+      await trackResumeActivity({
+        type: "downloaded",
+        resumeName: getCoverLetterDisplayName(),
+        documentType: "cover-letter",
+      });
     } catch (err) {
       console.error("Cover letter Word export failed:", err);
       alert("Failed to generate Word document. Please try again.");
