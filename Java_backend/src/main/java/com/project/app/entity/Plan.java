@@ -21,7 +21,7 @@ public class Plan {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private Integer planId;
+    private Long planId;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -52,29 +52,34 @@ public class Plan {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
-    // Manual getters to fix compilation issues
-    public Integer getPlanId() { return planId; }
-    public void setPlanId(Integer planId) { this.planId = planId; }
-    
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getPlanId() { return planId; }
+    public void setPlanId(Long planId) { this.planId = planId; }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    
+
     public String getBadge() { return badge; }
     public void setBadge(String badge) { this.badge = badge; }
-    
+
     public Integer getPrice() { return price; }
     public void setPrice(Integer price) { this.price = price; }
-    
+
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
-    
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    
+
     public List<String> getFeatures() { return features; }
     public void setFeatures(List<String> features) { this.features = features; }
-    
+
     public Integer getOrder() { return order; }
     public void setOrder(Integer order) { this.order = order; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

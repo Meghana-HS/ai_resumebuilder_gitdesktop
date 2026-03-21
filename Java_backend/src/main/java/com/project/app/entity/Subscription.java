@@ -45,6 +45,20 @@ public class Subscription {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    public Long getId() { return id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public SubscriptionPlan getPlan() { return plan; }
+    public void setPlan(SubscriptionPlan plan) { this.plan = plan; }
+    public SubscriptionStatus getStatus() { return status; }
+    public void setStatus(SubscriptionStatus status) { this.status = status; }
+    public LocalDateTime getStartDate() { return startDate; }
+    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
+    public LocalDateTime getEndDate() { return endDate; }
+    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+
     public enum SubscriptionPlan {
         FREE, PRO, LIFETIME
     }

@@ -1,14 +1,16 @@
 package com.project.app.controller;
 
-import com.project.app.dto.ApiResponse;
 import com.project.app.entity.Plan;
 import com.project.app.service.PlanService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/plans")
@@ -18,54 +20,74 @@ public class PlanController {
     private PlanService planService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Plan>>> getAllActivePlans() {
-        List<Plan> plans = planService.getAllActivePlans();
-        return ResponseEntity.ok(ApiResponse.success("Plans retrieved", plans));
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<Plan>>> getAllPlans() {
-        List<Plan> plans = planService.getAllPlans();
-        return ResponseEntity.ok(ApiResponse.success("All plans retrieved", plans));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Plan>> getPlanById(@PathVariable Long id) {
-        Optional<Plan> plan = planService.getPlanById(id);
-        return plan.map(value -> ResponseEntity.ok(ApiResponse.success("Plan retrieved", value)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/plan-id/{planId}")
-    public ResponseEntity<ApiResponse<Plan>> getPlanByPlanId(@PathVariable Integer planId) {
-        Optional<Plan> plan = planService.getPlanByPlanId(planId);
-        return plan.map(value -> ResponseEntity.ok(ApiResponse.success("Plan retrieved", value)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<Plan>> createPlan(@RequestBody Plan plan) {
-        Plan createdPlan = planService.createPlan(plan);
-        return ResponseEntity.status(201).body(ApiResponse.success("Plan created", createdPlan));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Plan>> updatePlan(@PathVariable Long id, @RequestBody Plan planDetails) {
+    public ResponseEntity<List<Plan>> getAllPlans() {
         try {
-            Plan updatedPlan = planService.updatePlan(id, planDetails);
-            return ResponseEntity.ok(ApiResponse.success("Plan updated", updatedPlan));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(planService.getAllPlans());
+        } catch (Exception exception) {
+            return ResponseEntity.internalServerError().body(List.of());
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deletePlan(@PathVariable Long id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPlanById(@PathVariable Long id) {
         try {
-            planService.deletePlan(id);
-            return ResponseEntity.ok(ApiResponse.success("Plan deleted"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(planService.getPlanByPlanId(id));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.status(404).body(Map.of("message", "Plan not found"));
+        } catch (Exception exception) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to fetch plan", "error", exception.getMessage()));
+        }
+    }
+
+    @PutMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> updateAllPlans(@Valid @RequestBody List<Plan> plans) {
+        try {
+            List<Plan> updatedPlans = planService.updateAllPlans(plans);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Plans updated successfully");
+            response.put("plans", updatedPlans);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(409).body(Map.of("message", exception.getMessage()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        } catch (Exception exception) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to update plans", "error", exception.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> updatePlan(@PathVariable Long id, @RequestBody Plan planDetails) {
+        try {
+            Plan updatedPlan = planService.updatePlan(id, planDetails);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Plan updated successfully");
+            response.put("plan", updatedPlan);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(409).body(Map.of("message", exception.getMessage()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.status(404).body(Map.of("message", "Plan not found"));
+        } catch (Exception exception) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to update plan", "error", exception.getMessage()));
+        }
+    }
+
+    @PostMapping("/initialize")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> initializePlans() {
+        try {
+            List<Plan> plans = planService.initializePlans();
+            return ResponseEntity.status(201).body(Map.of(
+                "message", "Default plans initialized successfully",
+                "plans", plans
+            ));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Plans already initialized", "count", planService.getAllPlans().size()));
+        } catch (Exception exception) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to initialize plans", "error", exception.getMessage()));
         }
     }
 }

@@ -11,21 +11,23 @@ import java.util.List;
 
 @Repository
 public interface ApiMetricRepository extends JpaRepository<ApiMetric, Long> {
-    
+
     List<ApiMetric> findByUserIdOrderByTimestampDesc(Long userId);
-    
+
     List<ApiMetric> findTop10ByOrderByTimestampDesc();
-    
+
     List<ApiMetric> findByEndpointOrderByTimestampDesc(String endpoint);
-    
+
     @Query("SELECT COUNT(a) FROM ApiMetric a WHERE a.user.id = :userId")
     long countByUserId(@Param("userId") Long userId);
-    
+
     @Query("SELECT COUNT(a) FROM ApiMetric a WHERE a.timestamp >= :since")
     long countSince(@Param("since") java.time.LocalDateTime since);
-    
+
     List<ApiMetric> findByTimestampBetweenOrderByTimestampDesc(
-        java.time.LocalDateTime start, 
+        java.time.LocalDateTime start,
         java.time.LocalDateTime end
     );
+
+    void deleteByUserId(Long userId);
 }

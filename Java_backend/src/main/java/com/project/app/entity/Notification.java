@@ -46,26 +46,31 @@ public class Notification {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
-    // Manual getters/setters to fix compilation issues
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
-    
+
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
-    
+
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
-    
+
     public Actor getActor() { return actor; }
     public void setActor(Actor actor) { this.actor = actor; }
-    
+
     public Boolean getIsRead() { return isRead; }
     public void setIsRead(Boolean isRead) { this.isRead = isRead; }
-    
+
     public Boolean getFromAdmin() { return fromAdmin; }
     public void setFromAdmin(Boolean fromAdmin) { this.fromAdmin = fromAdmin; }
-    
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+
     public enum Actor {
         SYSTEM, USER
     }

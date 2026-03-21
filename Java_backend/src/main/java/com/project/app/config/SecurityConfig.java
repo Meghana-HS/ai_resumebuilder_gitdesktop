@@ -77,6 +77,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/template/parse/{id}")
                     .permitAll()
+                    .requestMatchers("/api/template-visibility/**")
+                    .permitAll()
                     .requestMatchers("/api/blog")
                     .permitAll()
                     .requestMatchers("/api/blog/{id}")

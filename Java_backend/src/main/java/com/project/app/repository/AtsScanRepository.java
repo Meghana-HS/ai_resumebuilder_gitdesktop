@@ -15,4 +15,5 @@ public interface AtsScanRepository extends JpaRepository<AtsScan, Long> {
     Optional<AtsScan> findTopByUserIdOrderByCreatedAtDesc(Long userId);
     List<AtsScan> findByUserIdOrderByCreatedAtDesc(Long userId);
     Page<AtsScan> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    void deleteByUserId(Long userId);
 }

@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface PlanRepository extends JpaRepository<Plan, Long> {
     List<Plan> findByActiveTrueOrderByOrder();
-    Plan findByPlanId(Integer planId);
+    Plan findByPlanId(Long planId);
     Plan findByName(String name);
+    boolean existsByNameIgnoreCaseAndPlanIdNot(String name, Long planId);
+    List<Plan> findAllByOrderByOrderAsc();
 }

@@ -1,7 +1,5 @@
 package com.project.app.controller;
 
-import com.project.app.dto.ApiResponse;
-import com.project.app.entity.Notification;
 import com.project.app.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -24,51 +22,42 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Notification>>> getUserNotifications() {
-        Long userId = getCurrentUserId();
-        List<Notification> notifications = notificationService.getUserNotifications(userId);
-        return ResponseEntity.ok(ApiResponse.success("Notifications retrieved", notifications));
+    public ResponseEntity<Map<String, Object>> getDefaultUserNotifications() {
+        return ResponseEntity.ok(notificationService.getUserNotifications(getCurrentUserId()));
     }
 
-    @GetMapping("/unread")
-    public ResponseEntity<ApiResponse<List<Notification>>> getUnreadNotifications() {
-        Long userId = getCurrentUserId();
-        List<Notification> notifications = notificationService.getUnreadNotifications(userId);
-        return ResponseEntity.ok(ApiResponse.success("Unread notifications retrieved", notifications));
+    @GetMapping("/user")
+    public ResponseEntity<Map<String, Object>> getUserNotifications() {
+        return ResponseEntity.ok(notificationService.getUserNotifications(getCurrentUserId()));
+    }
+
+    @PutMapping("/user/read-all")
+    public ResponseEntity<Map<String, Object>> markUserNotificationsRead() {
+        return ResponseEntity.ok(notificationService.markUserNotificationsRead(getCurrentUserId()));
+    }
+
+    @GetMapping("/admin")
+    public ResponseEntity<Map<String, Object>> getAdminNotifications() {
+        return ResponseEntity.ok(notificationService.getAdminNotifications());
+    }
+
+    @PostMapping("/admin/mark-all-read")
+    public ResponseEntity<Map<String, Object>> markAdminNotificationsRead() {
+        return ResponseEntity.ok(notificationService.markAdminNotificationsRead());
+    }
+
+    @DeleteMapping("/admin/delete-all")
+    public ResponseEntity<Map<String, Object>> deleteAllAdminNotifications() {
+        return ResponseEntity.ok(notificationService.deleteAllAdminNotifications());
     }
 
     @PutMapping("/{id}/read")
-    public ResponseEntity<ApiResponse<Notification>> markAsRead(@PathVariable Long id) {
-        Long userId = getCurrentUserId();
-        try {
-            Notification notification = notificationService.markAsRead(id, userId);
-            return ResponseEntity.ok(ApiResponse.success("Notification marked as read", notification));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PutMapping("/read-all")
-    public ResponseEntity<ApiResponse<String>> markAllAsRead() {
-        Long userId = getCurrentUserId();
-        notificationService.markAllAsRead(userId);
-        return ResponseEntity.ok(ApiResponse.success("All notifications marked as read"));
+    public ResponseEntity<Map<String, Object>> markNotificationRead(@PathVariable Long id) {
+        return ResponseEntity.ok(notificationService.markNotificationRead(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteNotification(@PathVariable Long id) {
-        Long userId = getCurrentUserId();
-        try {
-            notificationService.deleteNotification(id, userId);
-            return ResponseEntity.ok(ApiResponse.success("Notification deleted"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<Notification>> createNotification(@RequestBody Notification notification) {
-        Notification createdNotification = notificationService.createNotification(notification);
-        return ResponseEntity.status(201).body(ApiResponse.success("Notification created", createdNotification));
+    public ResponseEntity<Map<String, Object>> deleteNotification(@PathVariable Long id) {
+        return ResponseEntity.ok(notificationService.deleteNotification(id));
     }
 }
