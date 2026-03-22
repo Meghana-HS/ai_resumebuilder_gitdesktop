@@ -87,19 +87,19 @@ const AboutUs = () => {
             className="max-w-5xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-10 md:gap-12 items-center"
           >
             <div className="space-y-5 md:space-y-6 text-center md:text-left">
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">About UptoSkills</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">About SkillRise</h2>
               <h6><b>Headquarter:</b> Palam, New Delhi, India.</h6>
               <p className="text-slate-600 leading-relaxed border-l-4 border-blue-500 pl-4">
-                UptoSkills Tech Foundation is an Indian ed-tech and skill
+                SkillRise Tech Foundation is an Indian ed-tech and skill
                 development organization focused on bridging the gap between
                 academic education and real-world industry requirements. Since
-                its early days as a learning platform, UptoSkills has worked to
+                its early days as a learning platform, SkillRise has worked to
                 make students more employable through practical, career-oriented
                 learning experiences.
               </p>
               <p className="text-slate-600 leading-relaxed">
                 With training programs in Digital Marketing, Web Development,
-                Data Analytics, AI, and soft skills, UptoSkills supports learners
+                Data Analytics, AI, and soft skills, SkillRise supports learners
                 in building both technical expertise and professional confidence.
               </p>
               
@@ -114,7 +114,7 @@ const AboutUs = () => {
   {/* Image */}
 <img
   src={Company}
-  alt="UptoSkills Learning Ecosystem"
+  alt="SkillRise Learning Ecosystem"
   className="relative w-full max-w-none lg:w-[110%] xl:w-[120%] h-auto object-contain drop-shadow-2xl rounded-2xl backdrop-blur-sm"
 />
 
@@ -128,7 +128,7 @@ const AboutUs = () => {
         <section className="py-12 bg-gradient-to-b from-white to-blue-50">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp}>
-                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Why Choose UptoSkills</h2>
+                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Why Choose SkillRise</h2>
                 <p className="mt-4 text-slate-600 max-w-2xl mx-auto text-sm sm:text-base">
                 We combine skill development expertise with AI-powered career tools to
                 help learners move from education to employment with confidence.
@@ -204,7 +204,7 @@ const AboutUs = () => {
           >
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Our Vision</h2>
             <p className="text-slate-600 text-base sm:text-lg">
-              UptoSkills aims to make learners industry-ready by combining
+              SkillRise aims to make learners industry-ready by combining
               multi-disciplinary skill development with career support. The AI
               Resume Builder is an extension of this mission — helping candidates
               clearly present their abilities and stand out in competitive hiring
@@ -234,7 +234,7 @@ const AboutUs = () => {
                   {
                     year: "2015",
                     title: "The Idea Was Born",
-                    desc: "UptoSkills started with a mission to bridge India's employability gap through practical skill development.",
+                    desc: "SkillRise started with a mission to bridge India's employability gap through practical skill development.",
                     icon: "💡",
                   },
                   {
@@ -258,7 +258,7 @@ const AboutUs = () => {
                   {
                     year: "2024",
                     title: "Official Incorporation",
-                    desc: "Registered as UptoSkills Tech Foundation to scale structured impact initiatives.",
+                    desc: "Registered as SkillRise Tech Foundation to scale structured impact initiatives.",
                     icon: "🏢",
                   },
                   {
@@ -375,7 +375,7 @@ const AboutUs = () => {
               <p className="text-slate-600 leading-relaxed mt-3 text-sm sm:text-base">
                 Many talented students struggle to translate their knowledge into
                 resumes that reflect their true potential. By combining career
-                readiness expertise with AI technology, UptoSkills ensures that
+                readiness expertise with AI technology, SkillRise ensures that
                 learners can present their strengths with clarity and confidence.
               </p>
             </div>
