@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  Check,
-  Pencil,
-  Plus,
-  Trash2,
-  GripVertical,
-  GripHorizontal,
-  Sparkles,
-} from "lucide-react";
+import { Check, ToggleLeft, ToggleRight, Pencil, Plus, Trash2, GripVertical, GripHorizontal } from "lucide-react";
 import axiosInstance from "../../../api/axios";
 import { usePricing } from "../../../context/Pricingcontext";
-import toast, { Toaster } from "react-hot-toast";
+import toast, { Toaster } from 'react-hot-toast';
 import {
   DndContext,
   closestCenter,
@@ -18,7 +10,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
@@ -26,20 +18,21 @@ import {
   verticalListSortingStrategy,
   useSortable,
   rectSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { SortablePlanCard } from "./SortablePlanCard.jsx";
-import AdminCard from "../ui/AdminCard";
-import AdminButton from "../ui/AdminButton";
-import AdminInput from "../ui/AdminInput";
-import AdminToggle from "../ui/AdminToggle";
 
 // Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const SortableFeatureItem = ({ id, feature, onChange, onRemove }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -47,11 +40,7 @@ const SortableFeatureItem = ({ id, feature, onChange, onRemove }) => {
   };
 
   return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2 bg-white"
-    >
+    <li ref={setNodeRef} style={style} className="flex items-center gap-2 bg-white">
       <div
         {...attributes}
         {...listeners}
@@ -86,18 +75,12 @@ const AdminSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingPricePlanId, setEditingPricePlanId] = useState(null);
-  const [newPlanDraft, setNewPlanDraft] = useState({
-    name: "",
-    price: 0,
-    badge: "",
-    description: "",
-  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
 
   useEffect(() => {
@@ -109,10 +92,10 @@ const AdminSubscription = () => {
   useEffect(() => {
     if (plans.length > 0) {
       setLocalPlans(
-        plans.map((plan) => ({
+        plans.map(plan => ({
           ...plan,
-          features: plan.features.map((f) => ({ id: generateId(), text: f })),
-        })),
+          features: plan.features.map(f => ({ id: generateId(), text: f }))
+        }))
       );
     }
   }, [plans]);
@@ -131,16 +114,10 @@ const AdminSubscription = () => {
       const allUsers = usersResponse.data;
       const allPlans = plansResponse.data;
 
-      const paidPlanNames = allPlans
-        .filter((p) => p.price > 0 && p.name !== "Free")
-        .map((p) => p.name.toLowerCase());
+      const paidPlanNames = allPlans.filter(p => p.price > 0 && p.name !== "Free").map(p => p.name.toLowerCase());
 
-      const pro = allUsers.filter(
-        (user) => user.plan && paidPlanNames.includes(user.plan.toLowerCase()),
-      );
-      const free = allUsers.filter(
-        (user) => user.plan === "Free" && user.isAdmin === false,
-      );
+      const pro = allUsers.filter(user => user.plan && paidPlanNames.includes(user.plan.toLowerCase()));
+      const free = allUsers.filter(user => user.plan === "Free" && user.isAdmin === false);
 
       setPaidUsers(pro);
       setFreeUsersCount(free.length);
@@ -156,20 +133,20 @@ const AdminSubscription = () => {
   const togglePlan = (id) => {
     setLocalPlans((prev) =>
       prev.map((plan) =>
-        plan.id === id ? { ...plan, active: !plan.active } : plan,
-      ),
+        plan.id === id ? { ...plan, active: !plan.active } : plan
+      )
     );
   };
 
   const updatePrice = (id, value) => {
     setLocalPlans((prev) =>
-      prev.map((plan) => (plan.id === id ? { ...plan, price: value } : plan)),
+      prev.map((plan) => (plan.id === id ? { ...plan, price: value } : plan))
     );
   };
 
   const updatePlanField = (id, field, value) => {
     setLocalPlans((prev) =>
-      prev.map((plan) => (plan.id === id ? { ...plan, [field]: value } : plan)),
+      prev.map((plan) => (plan.id === id ? { ...plan, [field]: value } : plan))
     );
   };
 
@@ -184,56 +161,35 @@ const AdminSubscription = () => {
         active: true,
         description: "Plan description",
         order: prev.length + 1,
-        features: [{ id: generateId(), text: "New Feature" }],
-      },
+        features: [{ id: generateId(), text: "New Feature" }]
+      }
     ]);
-  };
-
-  const handleQuickAddPlan = () => {
-    const newPlanId = Date.now();
-    const name = newPlanDraft.name?.trim() || "New Plan";
-    const description = newPlanDraft.description?.trim() || "Plan description";
-    const badge = newPlanDraft.badge?.trim() || "";
-    const price = Number(newPlanDraft.price) || 0;
-
-    setLocalPlans((prev) => [
-      ...prev,
-      {
-        id: newPlanId,
-        name,
-        price,
-        badge,
-        active: true,
-        description,
-        order: prev.length + 1,
-        features: [{ id: generateId(), text: "New Feature" }],
-      },
-    ]);
-    setNewPlanDraft({ name: "", price: 0, badge: "", description: "" });
   };
 
   const handleRemovePlan = (planId) => {
     if (window.confirm("Are you sure you want to delete this plan?")) {
-      setLocalPlans((prev) => {
-        const planAfterDelete = prev.filter((plan) => plan.id !== planId);
-        return planAfterDelete.map((plan, index) => ({
-          ...plan,
-          order: index + 1,
-        }));
-      });
-    }
-  };
+      setLocalPlans(prev => {
+        const planAfterDelete = prev.filter(plan => plan.id !== planId);
+        return planAfterDelete.map((plan, index) => (
+          {
+            ...plan,
+            order: index + 1
+          }
+        ))
+      })
+    };
+  }
   const handleFeatureChange = (planId, featureId, newValue) => {
     setLocalPlans((prev) =>
       prev.map((plan) => {
         if (plan.id === planId) {
-          const newFeatures = plan.features.map((f) =>
-            f.id === featureId ? { ...f, text: newValue } : f,
+          const newFeatures = plan.features.map(f =>
+            f.id === featureId ? { ...f, text: newValue } : f
           );
           return { ...plan, features: newFeatures };
         }
         return plan;
-      }),
+      })
     );
   };
 
@@ -243,14 +199,11 @@ const AdminSubscription = () => {
         if (plan.id === planId) {
           return {
             ...plan,
-            features: [
-              ...plan.features,
-              { id: generateId(), text: "New Feature" },
-            ],
+            features: [...plan.features, { id: generateId(), text: "New Feature" }]
           };
         }
         return plan;
-      }),
+      })
     );
   };
 
@@ -262,7 +215,7 @@ const AdminSubscription = () => {
           return { ...plan, features: newFeatures };
         }
         return plan;
-      }),
+      })
     );
   };
 
@@ -271,17 +224,17 @@ const AdminSubscription = () => {
 
     if (active.id !== over.id) {
       setLocalPlans((prev) =>
-        prev.map((plan) => {
+        prev.map(plan => {
           if (plan.id === planId) {
-            const oldIndex = plan.features.findIndex((f) => f.id === active.id);
-            const newIndex = plan.features.findIndex((f) => f.id === over.id);
+            const oldIndex = plan.features.findIndex(f => f.id === active.id);
+            const newIndex = plan.features.findIndex(f => f.id === over.id);
             return {
               ...plan,
-              features: arrayMove(plan.features, oldIndex, newIndex),
+              features: arrayMove(plan.features, oldIndex, newIndex)
             };
           }
           return plan;
-        }),
+        })
       );
     }
   };
@@ -289,35 +242,33 @@ const AdminSubscription = () => {
   const handlePlanDragEnd = (event) => {
     const { over, active } = event;
     if (!over || active.id === over.id) return;
-    setLocalPlans((prev) => {
-      const oldIndex = prev.findIndex((p) => p.id === active.id);
-      const newIndex = prev.findIndex((p) => p.id === over.id);
+    setLocalPlans(prev => {
+      const oldIndex = prev.findIndex(p => p.id === active.id);
+      const newIndex = prev.findIndex(p => p.id === over.id);
       const newPlansArray = arrayMove(prev, oldIndex, newIndex);
       return newPlansArray.map((item, index) => ({
         ...item,
-        order: index + 1,
-      }));
+        order: index + 1
+      }))
     });
   };
 
   const handleSaveChanges = async () => {
     setSaving(true);
     // Convert back to string array for backend
-    const plansToSave = localPlans.map((plan) => ({
+    const plansToSave = localPlans.map(plan => ({
       ...plan,
-      features: plan.features.map((f) => f.text),
+      features: plan.features.map(f => f.text)
     }));
     console.log(localPlans);
     const result = await savePlans(plansToSave);
     setSaving(false);
 
     if (result.success) {
-      toast.success(
-        "Pricing changes saved successfully! The changes will now be visible on the pricing page.",
-      );
+      toast.success('Pricing changes saved successfully! The changes will now be visible on the pricing page.');
       await fetchPlans();
     } else {
-      toast.error("Failed to save changes: " + result.error);
+      toast.error('Failed to save changes: ' + result.error);
     }
   };
 
@@ -325,93 +276,24 @@ const AdminSubscription = () => {
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
       <Toaster position="top-right" />
       {/* Header */}
-      <div className="mb-6 sm:mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            Subscription Management
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 mt-1 sm:mt-2">
-            Manage plans, pricing, and visibility across the platform.
-          </p>
-        </div>
-        <AdminButton
-          variant="primary"
-          onClick={handleSaveChanges}
-          disabled={saving}
-          loading={saving}
-        >
-          Save Changes
-        </AdminButton>
+      <div className="mb-6 sm:mb-10">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+          Subscription Management
+        </h1>
+        <p className="text-sm sm:text-base text-slate-600 mt-1 sm:mt-2">
+          Admin can enable, disable and update pricing for subscription plans
+        </p>
       </div>
-
-      {/* Quick Add */}
-      <AdminCard
-        className="mb-6 sm:mb-10"
-        header={
-          <div className="flex items-center gap-2 text-slate-800">
-            <Sparkles className="h-4 w-4 text-blue-600" />
-            <h2 className="text-sm font-semibold">Add New Plan</h2>
-          </div>
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <AdminInput
-            label="Plan Name"
-            placeholder="Pro Plus"
-            value={newPlanDraft.name}
-            onChange={(e) =>
-              setNewPlanDraft((prev) => ({ ...prev, name: e.target.value }))
-            }
-          />
-          <AdminInput
-            label="Monthly Price (INR)"
-            type="number"
-            placeholder="1499"
-            value={newPlanDraft.price}
-            onChange={(e) =>
-              setNewPlanDraft((prev) => ({ ...prev, price: e.target.value }))
-            }
-          />
-          <AdminInput
-            label="Badge Tag"
-            placeholder="Best Value"
-            value={newPlanDraft.badge}
-            onChange={(e) =>
-              setNewPlanDraft((prev) => ({ ...prev, badge: e.target.value }))
-            }
-          />
-          <AdminInput
-            label="Short Description"
-            placeholder="For growing teams"
-            value={newPlanDraft.description}
-            onChange={(e) =>
-              setNewPlanDraft((prev) => ({
-                ...prev,
-                description: e.target.value,
-              }))
-            }
-          />
-        </div>
-        <div className="mt-4 flex justify-end">
-          <AdminButton variant="secondary" onClick={handleQuickAddPlan}>
-            <Plus className="h-4 w-4" />
-            Add Plan
-          </AdminButton>
-        </div>
-      </AdminCard>
 
       {/* Stats / Dashboard */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-10">
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow flex flex-col gap-2">
           <p className="text-xs sm:text-sm text-gray-500">Total Revenue</p>
           <p className="text-xl sm:text-2xl font-bold">
-            INR {stats?.revenue?.total?.toLocaleString() || 0}
+            ₹{stats?.revenue?.total?.toLocaleString() || 0}
             {stats?.revenue?.change !== 0 && (
-              <span
-                className={`text-xs sm:text-sm ml-2 ${stats?.revenue?.change >= 0 ? "text-green-500" : "text-red-500"}`}
-              >
-                {stats?.revenue?.change > 0 ? "+" : ""}
-                {stats?.revenue?.change}%
+              <span className={`text-xs sm:text-sm ml-2 ${stats?.revenue?.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {stats?.revenue?.change > 0 ? '+' : ''}{stats?.revenue?.change}%
               </span>
             )}
           </p>
@@ -419,17 +301,14 @@ const AdminSubscription = () => {
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow flex flex-col gap-2">
           <p className="text-xs sm:text-sm text-gray-500">Active Subscribers</p>
           <p className="text-xl sm:text-2xl font-bold">
-            {paidUsers.length}{" "}
-            <span className="text-gray-400 text-xs sm:text-sm">(Pro)</span>
+            {paidUsers.length} <span className="text-gray-400 text-xs sm:text-sm">(Pro)</span>
           </p>
         </div>
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow flex flex-col gap-2">
           <p className="text-xs sm:text-sm text-gray-500">Free Users</p>
           <p className="text-xl sm:text-2xl font-bold">
             {freeUsersCount.toLocaleString()}
-            <span className="text-gray-400 text-xs sm:text-sm ml-2">
-              (Leads)
-            </span>
+            <span className="text-gray-400 text-xs sm:text-sm ml-2">(Leads)</span>
           </p>
         </div>
       </div>
@@ -441,7 +320,7 @@ const AdminSubscription = () => {
         onDragEnd={handlePlanDragEnd}
       >
         <SortableContext
-          items={localPlans.map((p) => p.id)}
+          items={localPlans.map(p => p.id)}
           strategy={rectSortingStrategy}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -463,16 +342,17 @@ const AdminSubscription = () => {
                       <input
                         type="text"
                         value={plan.name}
-                        onChange={(e) =>
-                          updatePlanField(plan.id, "name", e.target.value)
-                        }
+                        onChange={(e) => updatePlanField(plan.id, 'name', e.target.value)}
                         className="text-lg sm:text-xl font-semibold text-gray-900 bg-transparent border border-dashed border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none rounded w-2/3 px-1.5 -ml-1.5 py-0.5"
                       />
-                      <div className="flex items-center gap-2">
-                        <AdminToggle
-                          checked={plan.active}
-                          onChange={() => togglePlan(plan.id)}
-                        />
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => togglePlan(plan.id)}>
+                          {plan.active ? (
+                            <ToggleRight className="text-green-500 w-6 h-6" />
+                          ) : (
+                            <ToggleLeft className="text-gray-400 w-6 h-6" />
+                          )}
+                        </button>
                         <button
                           onClick={() => handleRemovePlan(plan.id)}
                           className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
@@ -487,52 +367,38 @@ const AdminSubscription = () => {
                       <input
                         type="text"
                         value={plan.badge}
-                        onChange={(e) =>
-                          updatePlanField(plan.id, "badge", e.target.value)
-                        }
+                        onChange={(e) => updatePlanField(plan.id, 'badge', e.target.value)}
                         className="text-lg sm:text-xl font-medium text-gray-800 bg-transparent border border-dashed border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none rounded w-2/3 px-1.5 -ml-1.5 py-0.5"
                       />
                     </div>
                     <textarea
                       value={plan.description}
-                      onChange={(e) =>
-                        updatePlanField(plan.id, "description", e.target.value)
-                      }
+                      onChange={(e) => updatePlanField(plan.id, 'description', e.target.value)}
                       className="text-sm text-gray-500 bg-transparent border border-dashed border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none rounded w-full resize-none px-1.5 -ml-1.5 py-1"
                       rows={2}
                     />
 
                     {/* Price Control */}
                     <div className="mt-4">
-                      <label className="text-sm text-gray-600">
-                        Monthly Price (INR)
-                      </label>
+                      <label className="text-sm text-gray-600">Monthly Price (₹)</label>
                       <div className="flex items-center gap-2 mt-1">
                         <input
                           type="number"
                           value={plan.price}
-                          disabled={
-                            !plan.active || editingPricePlanId !== plan.id
-                          }
+                          disabled={!plan.active || editingPricePlanId !== plan.id}
                           onChange={(e) => updatePrice(plan.id, e.target.value)}
                           className={`w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 ${
-                            editingPricePlanId === plan.id
-                              ? "bg-white"
-                              : "bg-gray-50"
+                            editingPricePlanId === plan.id ? "bg-white" : "bg-gray-50"
                           }`}
                         />
                         <button
                           onClick={() =>
                             setEditingPricePlanId(
-                              editingPricePlanId === plan.id ? null : plan.id,
+                              editingPricePlanId === plan.id ? null : plan.id
                             )
                           }
                           className="p-1 hover:bg-gray-100 rounded transition-colors"
-                          title={
-                            editingPricePlanId === plan.id
-                              ? "Save Price"
-                              : "Edit Price"
-                          }
+                          title={editingPricePlanId === plan.id ? "Save Price" : "Edit Price"}
                         >
                           {editingPricePlanId === plan.id ? (
                             <Check className="w-4 h-4 text-green-600" />
@@ -545,16 +411,14 @@ const AdminSubscription = () => {
 
                     {/* Features with Drag and Drop */}
                     <div className="mt-5 flex-1">
-                      <label className="text-sm text-gray-600 mb-2 block">
-                        Features
-                      </label>
+                      <label className="text-sm text-gray-600 mb-2 block">Features</label>
                       <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
                         onDragEnd={(e) => handleDragEnd(e, plan.id)}
                       >
                         <SortableContext
-                          items={plan.features.map((f) => f.id)}
+                          items={plan.features.map(f => f.id)}
                           strategy={verticalListSortingStrategy}
                         >
                           <ul className="space-y-2">
@@ -563,12 +427,8 @@ const AdminSubscription = () => {
                                 key={feature.id}
                                 id={feature.id}
                                 feature={feature}
-                                onChange={(val) =>
-                                  handleFeatureChange(plan.id, feature.id, val)
-                                }
-                                onRemove={() =>
-                                  handleRemoveFeature(plan.id, feature.id)
-                                }
+                                onChange={(val) => handleFeatureChange(plan.id, feature.id, val)}
+                                onRemove={() => handleRemoveFeature(plan.id, feature.id)}
                               />
                             ))}
                           </ul>
@@ -585,12 +445,11 @@ const AdminSubscription = () => {
 
                     <div className="mt-6">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium
-                  ${
-                    plan.active
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium 
+                  ${plan.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                          }`}
                       >
                         {plan.active ? "Active" : "Disabled"}
                       </span>
@@ -606,14 +465,22 @@ const AdminSubscription = () => {
             >
               <div className="flex flex-col items-center justify-center opacity-60">
                 <Plus className="w-10 h-10 text-gray-500 mb-2" />
-                <span className="text-gray-600 font-medium text-lg">
-                  Add New Plan
-                </span>
+                <span className="text-gray-600 font-medium text-lg">Add New Plan</span>
               </div>
             </div>
           </div>
         </SortableContext>
       </DndContext>
+      {/* Save Button */}
+      <div className="mt-12 flex justify-end">
+        <button
+          onClick={handleSaveChanges}
+          disabled={saving}
+          className="px-6 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 mb-10 disabled:bg-gray-400"
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
 
       {/* Paid Users Section */}
       <div className="bg-white border rounded-xl shadow-sm mb-10 overflow-hidden">
@@ -636,19 +503,13 @@ const AdminSubscription = () => {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-6 py-8 text-center text-gray-500"
-                  >
+                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                     Loading paid users...
                   </td>
                 </tr>
               ) : paidUsers.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-6 py-8 text-center text-gray-500"
-                  >
+                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                     No paid users found.
                   </td>
                 </tr>
@@ -666,22 +527,17 @@ const AdminSubscription = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          user.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
+                        className={`px-2 py-1 rounded text-xs font-medium ${user.isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                          }`}
                       >
                         {user.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center text-gray-500">
                       {user.createdAt
-                        ? new Date(user.createdAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
+                        ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                         : "N/A"}
                     </td>
                   </tr>
@@ -694,13 +550,9 @@ const AdminSubscription = () => {
         {/* Mobile Card Grid View */}
         <div className="md:hidden p-4">
           {loading ? (
-            <div className="text-center text-gray-500 py-4">
-              Loading paid users...
-            </div>
+            <div className="text-center text-gray-500 py-4">Loading paid users...</div>
           ) : paidUsers.length === 0 ? (
-            <div className="text-center text-gray-500 py-4">
-              No paid users found.
-            </div>
+            <div className="text-center text-gray-500 py-4">No paid users found.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {paidUsers.map((user) => (
@@ -713,16 +565,13 @@ const AdminSubscription = () => {
                       <h3 className="font-semibold text-gray-900">
                         {user.username || "User"}
                       </h3>
-                      <p className="text-xs text-gray-500 break-all">
-                        {user.email}
-                      </p>
+                      <p className="text-xs text-gray-500 break-all">{user.email}</p>
                     </div>
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
-                        user.isActive
-                          ? "bg-green-100 text-green-700 border-green-200"
-                          : "bg-red-100 text-red-700 border-red-200"
-                      }`}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${user.isActive
+                        ? "bg-green-100 text-green-700 border-green-200"
+                        : "bg-red-100 text-red-700 border-red-200"
+                        }`}
                     >
                       {user.isActive ? "Active" : "Inactive"}
                     </span>
@@ -734,11 +583,7 @@ const AdminSubscription = () => {
                     </span>
                     <span className="text-xs text-gray-400">
                       {user.createdAt
-                        ? new Date(user.createdAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
+                        ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                         : "N/A"}
                     </span>
                   </div>

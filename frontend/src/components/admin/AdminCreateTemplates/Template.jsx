@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Filter, Plus, X, Search } from "lucide-react";
+import { Filter, Plus, Eye, X, Power, PowerOff, Search, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { TEMPLATES } from "../../user/Templates/TemplateRegistry";
 import { templates as CV_LIST } from "../../user/CV/Templatesgallery";
@@ -8,8 +8,6 @@ import CVTemplates from "../../user/CV/Cvtemplates";
 import mergeWithSampleData from "../../../utils/Datahelpers";
 import axiosInstance from "../../../api/axios";
 import TemplateTypeSwitch from "./TemplateTypeSwitch";
-import AdminCard from "../ui/AdminCard";
-import AdminButton from "../ui/AdminButton";
 
 const CV_PLACEHOLDER = "https://via.placeholder.com/210x297.png?text=CV+Template";
 const CV_CANVAS_WIDTH = 794;
@@ -57,13 +55,11 @@ export default function AdminTemplates() {
   const [pendingTemplates, setPendingTemplates] = React.useState([]);
   const [approvedTemplates, setApprovedTemplates] = React.useState({});
   const [statuses, setStatuses] = React.useState({});
-  const [isLoading, setIsLoading] = React.useState(true);
 
   const isTemplateActive = (id) => statuses[id] !== false;
 
   const refreshData = async (currentType = type) => {
     try {
-      setIsLoading(true);
 
       const statusRes = await axiosInstance.get('/api/template-visibility');
       setStatuses(statusRes.data || {});
@@ -114,7 +110,6 @@ export default function AdminTemplates() {
 
   const handleToggleStatus = async (id) => {
     try {
-      setIsLoading(true);
 
       setStatuses(prev => {
         const isActive = prev[id] !== false;
@@ -340,6 +335,22 @@ const AdminTemplateSection = ({
   handlePreview,
   handleToggleStatus,
 }) => {
+  const scrollRef = React.useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      // We want to scroll by 4 items. Each item is 25% - gap.
+      // A safe bet is current.clientWidth
+      const scrollAmount = current.clientWidth;
+      if (direction === "left") {
+        current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+      } else {
+        current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -349,31 +360,57 @@ const AdminTemplateSection = ({
         </span>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((tpl, index) => (
-          <AdminTemplateCard
-            key={tpl._id || index}
-            tpl={tpl}
-            type={type}
-            isActive={isTemplateActive(tpl._id)}
-            onPreview={() => handlePreview(tpl)}
-            onToggleStatus={() => handleToggleStatus(tpl._id)}
-          />
-        ))}
+      <div className="relative group/section">
+        <button
+          onClick={() => scroll("left")}
+          className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 w-10 h-10 bg-white border border-slate-200 shadow-lg rounded-full flex items-center justify-center text-slate-700 opacity-0 group-hover/section:opacity-100 transition-all duration-200 hover:bg-slate-50 hover:scale-110 disabled:opacity-0"
+        >
+          <ChevronLeft size={20} />
+        </button>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-6 overflow-x-auto pb-6 pt-1 px-1 -mx-1 scroll-smooth hide-scrollbar"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {items.map((tpl, index) => (
+            <AdminTemplateCard
+              key={tpl._id || index}
+              tpl={tpl}
+              type={type}
+              isActive={isTemplateActive(tpl._id)}
+              onPreview={() => handlePreview(tpl)}
+              onToggleStatus={() => handleToggleStatus(tpl._id)}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={() => scroll("right")}
+          className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 w-10 h-10 bg-white border border-slate-200 shadow-lg rounded-full flex items-center justify-center text-slate-700 opacity-0 group-hover/section:opacity-100 transition-all duration-200 hover:bg-slate-50 hover:scale-110"
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
     </div>
   );
 };
 
-const AdminTemplateCard = ({ tpl, type, isActive, onPreview, onToggleStatus }) => {
+const AdminTemplateCard = ({
+  tpl,
+  type,
+  isActive,
+  onPreview,
+  onToggleStatus,
+}) => {
   return (
-    <AdminCard
-      className={`p-3 overflow-hidden group transition-all duration-300 ${
-        !isActive ? "opacity-70 grayscale" : "hover:-translate-y-1 hover:shadow-lg"
+    <div
+      className={`min-w-[280px] w-full md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex-shrink-0 bg-white border border-slate-200 rounded-xl p-2 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative ${
+        !isActive ? "opacity-70 grayscale" : ""
       }`}
     >
       <div
-        className="relative w-full aspect-[210/297] rounded-lg overflow-hidden bg-slate-50 border border-slate-100"
+        className="relative w-full aspect-[210/297] rounded-lg overflow-hidden group cursor-pointer"
         onClick={onPreview}
       >
         {type === "resume" ? (
@@ -396,50 +433,32 @@ const AdminTemplateCard = ({ tpl, type, isActive, onPreview, onToggleStatus }) =
               })}
           </div>
         )}
+      </div>
+
+      <div className="mt-2 text-sm font-semibold text-slate-800 truncate">
+        {tpl.name}
+      </div>
+
+      <div className="text-xs text-slate-500 truncate">{tpl.previewText}</div>
+
+      <div className="flex gap-2 mt-3 pt-2 border-t">
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onPreview();
-          }}
-          className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-slate-200 rounded-lg px-3 py-1 text-xs font-semibold"
-        >
-          Preview
-        </button>
-      </div>
-
-      <div className="mt-3">
-        <div className="text-sm font-semibold text-slate-800 truncate">
-          {tpl.name}
-        </div>
-        <div className="text-xs text-slate-500 truncate">{tpl.previewText}</div>
-      </div>
-
-      <div className="flex gap-2 mt-3 pt-2 border-t border-slate-100">
-        <AdminButton
-          variant="secondary"
-          size="sm"
-          className="flex-1"
           onClick={onPreview}
+          className="flex-1 py-1 text-xs bg-slate-50 rounded hover:bg-slate-100 transition-colors"
         >
           View
-        </AdminButton>
-        <AdminButton
-          variant={isActive ? "ghost" : "primary"}
-          size="sm"
-          className="flex-1"
+        </button>
+        <button
           onClick={onToggleStatus}
+          className={`flex-1 py-1 text-xs rounded transition-colors ${
+            isActive
+              ? "bg-slate-100 hover:bg-red-50 hover:text-red-600"
+              : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+          }`}
         >
           {isActive ? "Disable" : "Enable"}
-        </AdminButton>
+        </button>
       </div>
-    </AdminCard>
+    </div>
   );
 };
-
-
-
-
-
-
-
-
