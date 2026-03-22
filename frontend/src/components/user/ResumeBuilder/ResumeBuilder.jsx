@@ -638,6 +638,10 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
     { id: "skills", label: "Skills", icon: Zap },
   ];
   const currentIdx = tabs.findIndex((tab) => tab.id === activeSection);
+  const totalSteps = tabs.length;
+  const isLastStep = currentIdx === totalSteps - 1;
+  const isCurrentSectionValid = Boolean(isSectionValid());
+  const canFinish = isLastStep && completion?.isComplete;
 
   /* Auto-scroll form container to top on section change (like CV) */
   useEffect(() => {
@@ -655,6 +659,45 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
     if (currentIdx < tabs.length - 1) {
       setActiveSection(tabs[currentIdx + 1].id);
     }
+  };
+
+  const scrollToValidationMessage = () => {
+    formContainerRef.current?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleFinish = () => {
+    if (!isLastStep) {
+      return;
+    }
+
+    if (!isSectionValid() || !completion?.isComplete) {
+      setWarning(true);
+      scrollToValidationMessage();
+      return;
+    }
+
+    setWarning(false);
+    setShowCompletionPopup(true);
+  };
+
+  const handleNext = () => {
+    if (isLastStep) {
+      handleFinish();
+      return;
+    }
+
+    if (!isSectionValid()) {
+      setWarning(true);
+      scrollToValidationMessage();
+      return;
+    }
+
+    setWarning(false);
+    goRight();
   };
 
   /* -------------------- FORM RENDER -------------------- */
@@ -787,27 +830,14 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
                       <span className="hidden sm:inline">Previous</span>
                     </button>
                     <button
-                      onClick={() => {
-                        if (completion?.isComplete) {
-                          setShowCompletionPopup(true);
-                        } else {
-                          if (!isSectionValid()) {
-                            setWarning(true);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                            return;
-                          }
-                          setWarning(false);
-                          goRight();
-                        }
-                      }}
+                      onClick={isLastStep ? handleFinish : handleNext}
                       disabled={
-                        !completion?.isComplete &&
-                        currentIdx === tabs.length - 1
+                        isLastStep ? !canFinish : !isCurrentSectionValid
                       }
                       className="flex gap-2 items-center text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg select-none disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                     >
                       <span className="hidden sm:inline">
-                        {completion?.isComplete ? "Finish" : "Next Step"}
+                        {isLastStep ? "Finish" : "Next Step"}
                       </span>
                       <ArrowRight size={16} />
                     </button>
@@ -848,28 +878,11 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
                   <span>Previous</span>
                 </button>
                 <button
-                  onClick={() => {
-                    if (completion?.isComplete) {
-                      setShowCompletionPopup(true);
-                    } else {
-                      if (!isSectionValid()) {
-                        setWarning(true);
-                        formContainerRef.current?.scrollTo({
-                          top: 0,
-                          behavior: "smooth",
-                        });
-                        return;
-                      }
-                      setWarning(false);
-                      goRight();
-                    }
-                  }}
-                  disabled={
-                    !completion?.isComplete && currentIdx === tabs.length - 1
-                  }
+                  onClick={isLastStep ? handleFinish : handleNext}
+                  disabled={isLastStep ? !canFinish : !isCurrentSectionValid}
                   className="flex gap-2 items-center text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg select-none disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                 >
-                  <span>{completion?.isComplete ? "Finish" : "Next"}</span>
+                  <span>{isLastStep ? "Finish" : "Next"}</span>
                   <ArrowRight size={16} />
                 </button>
               </div>
