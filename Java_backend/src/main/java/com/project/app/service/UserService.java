@@ -9,6 +9,7 @@ import com.project.app.repository.DownloadRepository;
 import com.project.app.repository.NotificationRepository;
 import com.project.app.repository.PageViewRepository;
 import com.project.app.repository.PaymentRepository;
+import com.project.app.repository.ResumeRepository;
 import com.project.app.repository.ResumeProfileRepository;
 import com.project.app.repository.SubscriptionRepository;
 import com.project.app.repository.UserRepository;
@@ -38,6 +39,9 @@ public class UserService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private ResumeRepository resumeRepository;
 
     @Autowired
     private DownloadRepository downloadRepository;
@@ -133,6 +137,7 @@ public class UserService {
         downloadRepository.deleteByUserId(userId);
         atsScanRepository.deleteAll(atsScanRepository.findByUserId(userId));
         resumeProfileRepository.deleteAll(resumeProfileRepository.findByUser(user));
+        resumeRepository.deleteByUserId(userId);
         pageViewRepository.deleteByUserId(userId);
         apiMetricRepository.deleteByUserId(userId);
         notificationRepository.deleteByUserId(userId);

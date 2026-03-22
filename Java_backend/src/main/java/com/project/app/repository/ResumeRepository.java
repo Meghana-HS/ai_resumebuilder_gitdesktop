@@ -2,12 +2,14 @@ package com.project.app.repository;
 
 import com.project.app.entity.Resume;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ResumeRepository extends JpaRepository<Resume, Long> {
-    // Temporarily remove custom methods to isolate the issue
+    @Modifying
+    @Query(value = "DELETE FROM resumes WHERE user_id = :userId", nativeQuery = true)
+    void deleteByUserId(@Param("userId") Long userId);
 }
