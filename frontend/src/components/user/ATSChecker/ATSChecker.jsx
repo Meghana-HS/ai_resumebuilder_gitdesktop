@@ -8,6 +8,7 @@ import {
   Upload,
   FileText,
   ChevronDown,
+  ChevronRight,
   CheckCircle2,
   XCircle,
   AlertTriangle,
@@ -231,6 +232,114 @@ function ScoreRing({ score, animated }) {
   );
 }
 
+function ScoreCard({ title, value, subtitle, icon: Icon, tone = "blue" }) {
+  const tones = {
+    blue: "bg-blue-50 text-blue-700 border-blue-100",
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    red: "bg-red-50 text-red-700 border-red-100",
+    slate: "bg-slate-50 text-slate-700 border-slate-100",
+  };
+
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
+            {title}
+          </p>
+          <p className="mt-2 text-3xl font-extrabold text-slate-900">{value}</p>
+          {subtitle && (
+            <p className="mt-1 text-sm leading-relaxed text-slate-500">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        <div
+          className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${tones[tone]}`}
+        >
+          <Icon size={18} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AccordionItem({
+  title,
+  icon: Icon,
+  tone = "slate",
+  count,
+  defaultOpen = false,
+  children,
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const tones = {
+    slate: "bg-slate-50 text-slate-700 border-slate-100",
+    blue: "bg-blue-50 text-blue-700 border-blue-100",
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    red: "bg-red-50 text-red-700 border-red-100",
+    violet: "bg-violet-50 text-violet-700 border-violet-100",
+    teal: "bg-teal-50 text-teal-700 border-teal-100",
+  };
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50"
+      >
+        <div
+          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border ${tones[tone]}`}
+        >
+          <Icon size={17} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-slate-900">{title}</p>
+        </div>
+        {typeof count !== "undefined" && (
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+            {count}
+          </span>
+        )}
+        {open ? (
+          <ChevronDown size={16} className="text-slate-400" />
+        ) : (
+          <ChevronRight size={16} className="text-slate-400" />
+        )}
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="border-t border-slate-100"
+          >
+            <div className="max-h-[320px] overflow-y-auto p-4">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function AnalysisCard({ title, icon, tone, count, defaultOpen, children }) {
+  return (
+    <AccordionItem
+      title={title}
+      icon={icon}
+      tone={tone}
+      count={count}
+      defaultOpen={defaultOpen}
+    >
+      {children}
+    </AccordionItem>
+  );
+}
+
 /* ─── Section Score Card ─── */
 function SectionCard({ section }) {
   const isOk = section.status === "ok";
@@ -361,6 +470,34 @@ function CircularLoader() {
       >
         Checking ATS compatibility...
       </motion.p>
+    </div>
+  );
+}
+
+function HighlightItem({ icon: Icon, title, value, tone = "slate" }) {
+  const tones = {
+    slate: "bg-slate-50 text-slate-600 border-slate-100",
+    blue: "bg-blue-50 text-blue-600 border-blue-100",
+    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    amber: "bg-amber-50 text-amber-600 border-amber-100",
+    red: "bg-red-50 text-red-600 border-red-100",
+  };
+
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div
+        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border ${tones[tone]}`}
+      >
+        <Icon size={17} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+          {title}
+        </p>
+        <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-700">
+          {value}
+        </p>
+      </div>
     </div>
   );
 }
@@ -1048,6 +1185,36 @@ const ATSChecker = ({ onSidebarToggle }) => {
     return errors;
   };
 
+  const sectionScores = analysisResult?.sectionScores || [];
+  const suggestions = analysisResult?.suggestions || [];
+  const jobRoles = analysisResult?.jobRoles || [];
+  const keywordSection = sectionScores.find((section) =>
+    section.sectionName?.toLowerCase().includes("keyword"),
+  );
+  const formattingSections = sectionScores.filter((section) => {
+    const name = section.sectionName?.toLowerCase() || "";
+    return (
+      name.includes("format") ||
+      name.includes("file format") ||
+      name.includes("layout")
+    );
+  });
+  const topSections = [...sectionScores]
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .slice(0, 3);
+  const issueCount =
+    spellingErrors.length + pronounErrors.length + suggestions.length;
+  const keywordSummary = keywordSection
+    ? `${keywordSection.score}/${keywordSection.maxScore} keyword relevance score`
+    : "Keyword match insights will appear after analysis";
+  const overallSummary = analysisResult
+    ? analysisResult.overallScore >= 80
+      ? "Strong ATS compatibility with only minor optimization opportunities."
+      : analysisResult.overallScore >= 60
+        ? "Solid baseline, but several improvements can raise your match rate."
+        : "Your resume needs structural and keyword improvements for better ATS performance."
+    : "Upload a resume to see a structured ATS score, strengths, and improvement areas.";
+
   return (
     <div className="ats-checker-page user-page min-h-screen bg-[#f8f9fc]">
       <UserNavBar onMenuClick={onSidebarToggle || (() => {})} />
@@ -1084,14 +1251,14 @@ const ATSChecker = ({ onSidebarToggle }) => {
       </div>
 
       {/* ── Two-column layout ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row gap-5 items-stretch">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-6 items-stretch">
         {/* ── LEFT PANEL: Analysis ── */}
         <div
-          className="w-full md:w-[340px] flex-shrink-0 flex flex-col gap-4 order-2 md:order-1"
+          className="w-full flex flex-col gap-4 order-1"
           style={{ minHeight: PANEL_HEIGHT }}
         >
           <div
-            className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col"
+            className="bg-white rounded-[28px] border border-slate-200 shadow-sm overflow-hidden flex flex-col"
             style={{ minHeight: PANEL_HEIGHT }}
           >
             {/* Panel header */}
@@ -1152,65 +1319,202 @@ const ATSChecker = ({ onSidebarToggle }) => {
                   </div>
                 )}
 
-                {/* Section Scores */}
-                {analysisResult?.sectionScores?.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="mt-5"
-                  >
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
-                      Section Breakdown
-                    </p>
-                    {analysisResult.sectionScores.map((s, i) => (
-                      <SectionCard
-                        key={`${s.sectionName}-${i}-${uploadedFile?.name}`}
-                        section={s}
-                      />
-                    ))}
-                  </motion.div>
-                )}
+                <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <ScoreCard
+                    title="Issues"
+                    value={String(issueCount).padStart(2, "0")}
+                    subtitle="Problems to review"
+                    icon={AlertCircle}
+                    tone={issueCount > 0 ? "amber" : "emerald"}
+                  />
+                  <ScoreCard
+                    title="Sections"
+                    value={String(sectionScores.length).padStart(2, "0")}
+                    subtitle="Checks completed"
+                    icon={Shield}
+                    tone="slate"
+                  />
+                  <ScoreCard
+                    title="Keywords"
+                    value={
+                      keywordSection
+                        ? `${keywordSection.score}/${keywordSection.maxScore}`
+                        : "--"
+                    }
+                    subtitle="Match score"
+                    icon={Zap}
+                    tone="emerald"
+                  />
+                  <ScoreCard
+                    title="Top Match"
+                    value={topSections[0]?.score ?? "--"}
+                    subtitle={
+                      topSections[0]?.sectionName || "Awaiting analysis"
+                    }
+                    icon={TrendingUp}
+                    tone="blue"
+                  />
+                </div>
 
-                {/* Error Tables */}
+                <div className="mt-5 grid gap-3 xl:grid-cols-3">
+                  <div className="xl:col-span-2 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
+                      Summary
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                      {overallSummary}
+                    </p>
+                  </div>
+                  <HighlightItem
+                    icon={Lightbulb}
+                    title="Fastest Win"
+                    value={
+                      suggestions[0]?.action ||
+                      "Actionable recommendations will appear after analysis"
+                    }
+                    tone="amber"
+                  />
+                </div>
+
+                {/* Section Scores */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-5"
+                >
+                  <AnalysisCard
+                    title="Score Overview"
+                    icon={Target}
+                    tone="blue"
+                    count={sectionScores.length}
+                    defaultOpen={true}
+                  >
+                    {sectionScores.length > 0 ? (
+                      <div className="space-y-2">
+                        {sectionScores.map((s, i) => (
+                          <SectionCard
+                            key={`${s.sectionName}-${i}-${uploadedFile?.name}`}
+                            section={s}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        Section-level scoring appears after the scan finishes.
+                      </p>
+                    )}
+                  </AnalysisCard>
+                </motion.div>
+
                 <AnimatePresence>
-                  {spellingErrors.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-4"
+                  >
+                    <AnalysisCard
+                      title="Formatting Issues"
+                      icon={FileText}
+                      tone="amber"
+                      count={
+                        spellingErrors.length +
+                        pronounErrors.length +
+                        formattingSections.length
+                      }
                     >
-                      <ErrorTable
-                        errors={spellingErrors}
-                        type="spell"
-                        onSelect={setActiveError}
-                      />
-                    </motion.div>
-                  )}
-                  {pronounErrors.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <ErrorTable
-                        errors={pronounErrors}
-                        type="pronoun"
-                        onSelect={setActiveError}
-                      />
-                    </motion.div>
-                  )}
+                      <div className="space-y-3">
+                        {formattingSections.length > 0 && (
+                          <div className="space-y-2">
+                            {formattingSections.map((section, index) => (
+                              <SectionCard
+                                key={`${section.sectionName}-${index}-formatting`}
+                                section={section}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {spellingErrors.length > 0 && (
+                          <ErrorTable
+                            errors={spellingErrors}
+                            type="spell"
+                            onSelect={setActiveError}
+                          />
+                        )}
+                        {pronounErrors.length > 0 && (
+                          <ErrorTable
+                            errors={pronounErrors}
+                            type="pronoun"
+                            onSelect={setActiveError}
+                          />
+                        )}
+                        {formattingSections.length === 0 &&
+                          spellingErrors.length === 0 &&
+                          pronounErrors.length === 0 && (
+                            <p className="text-sm text-slate-500">
+                              No formatting-related issues have been flagged
+                              yet.
+                            </p>
+                          )}
+                      </div>
+                    </AnalysisCard>
+                  </motion.div>
                 </AnimatePresence>
 
-                {/* Suggestions Panel */}
-                {analysisResult?.suggestions?.length > 0 && (
-                  <SuggestionsPanel suggestions={analysisResult.suggestions} />
-                )}
+                <div className="mt-4">
+                  <AnalysisCard
+                    title="Suggestions / Improvements"
+                    icon={Lightbulb}
+                    tone="violet"
+                    count={suggestions.length}
+                  >
+                    {suggestions.length > 0 ? (
+                      <SuggestionsPanel
+                        suggestions={analysisResult.suggestions}
+                      />
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        Improvement suggestions will appear here after analysis.
+                      </p>
+                    )}
+                  </AnalysisCard>
+                </div>
 
-                {/* Job Roles Panel */}
-                {analysisResult?.jobRoles?.length > 0 && (
-                  <JobRolesPanel roles={analysisResult.jobRoles} />
-                )}
+                <div className="mt-4">
+                  <AnalysisCard
+                    title="Keywords Match"
+                    icon={Zap}
+                    tone="emerald"
+                    count={
+                      keywordSection
+                        ? `${keywordSection.score}/${keywordSection.maxScore}`
+                        : jobRoles.length
+                    }
+                  >
+                    <div className="space-y-3">
+                      {keywordSection ? (
+                        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                          <p className="text-sm font-semibold text-emerald-800">
+                            {keywordSection.sectionName}
+                          </p>
+                          <p className="mt-1 text-xs leading-6 text-emerald-700">
+                            {keywordSection.suggestions?.length
+                              ? keywordSection.suggestions.join(" ")
+                              : "Keyword insights are available. Tailor exact terms to the target role for stronger ATS matching."}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-500">
+                          Keyword insights will appear after analysis.
+                        </p>
+                      )}
+                      {jobRoles.length > 0 && (
+                        <JobRolesPanel roles={jobRoles} />
+                      )}
+                    </div>
+                  </AnalysisCard>
+                </div>
               </div>
 
               {/* 🌀 BLUR OVERLAY - Shows during analysis */}
@@ -1327,7 +1631,7 @@ const ATSChecker = ({ onSidebarToggle }) => {
         </div>
 
         {/* ── RIGHT PANEL: Preview ── */}
-        <div className="flex-1 flex flex-col gap-4 order-1 md:order-2">
+        <div className="w-full flex flex-col gap-4 order-2">
           {/* Mobile toggle */}
           <button
             className="md:hidden flex items-center justify-between px-4 py-3.5 bg-white border border-slate-100 rounded-xl shadow-sm"
