@@ -1064,26 +1064,24 @@ const Downloads = () => {
                     </div>
                   ) : previewDocument?.html ? (
                     <div className="flex justify-center">
-                      <iframe
-                        srcDoc={
-                          previewDocument.html?.startsWith("<!DOCTYPE") ||
-                          previewDocument.html?.startsWith("<html")
-                            ? previewDocument.html
-                            : `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}body{margin:0;padding:0;}</style></head><body>${previewDocument.html}</body></html>`
-                        }
+                      {/* Render stored HTML directly (not in iframe) so
+                          Tailwind/global styles available in the main app apply.
+                          This keeps CV/Resume previews consistent with builder pages. */}
+                      <div
                         style={{
                           width: "794px",
                           minHeight: "1123px",
-                          border: "none",
+                          border: "2px solid #e5e7eb",
                           background: "white",
                           display: "block",
                           transform: `scale(${effectiveScale})`,
                           transformOrigin: "top center",
                           marginBottom: `${(1 - effectiveScale) * -1123}px`,
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                         }}
-                        sandbox="allow-same-origin allow-scripts"
-                        scrolling="no"
                         onClick={(e) => e.stopPropagation()}
+                        // eslint-disable-next-line react/no-danger
+                        dangerouslySetInnerHTML={{ __html: previewDocument.html }}
                       />
                     </div>
                   ) : (

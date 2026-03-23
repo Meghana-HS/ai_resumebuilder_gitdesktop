@@ -263,10 +263,14 @@ const CVPreview = ({
   ]);
   const isUserData = useMemo(() => hasAnyUserData(formData), [formData]);
   const previewRef = useRef(null);
+  const downloadLockRef = useRef(false);
 
   const downloadPDF = async () => {
     const TemplateComponent = CVTemplates[selectedTemplate];
     if (!TemplateComponent) return;
+
+    if (downloadLockRef.current) return;
+    downloadLockRef.current = true;
 
     let container;
     try {
@@ -362,6 +366,7 @@ const CVPreview = ({
     } finally {
       if (container && container.parentNode)
         document.body.removeChild(container);
+      downloadLockRef.current = false;
     }
   };
 
