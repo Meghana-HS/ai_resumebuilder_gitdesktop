@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import UpToSkillsImg from "../assets/logo6.png";
+import SkillRiseImg from "../assets/logo6.png";
 import { ChevronDown } from "lucide-react";
 // Import React Icons
 import { SiYoutube, SiInstagram, SiLinkedin, SiFacebook } from "react-icons/si";
@@ -28,17 +28,17 @@ function Footer() {
     {
       icon: <SiInstagram className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />,
       bgColor: "bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
-      href: "https://www.instagram.com/uptoskills?utm_medium=copy_link",
+      href: "https://www.instagram.com/skillrise?utm_medium=copy_link",
     },
     {
       icon: <SiLinkedin className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />,
       bgColor: "bg-[#0077b5]",
-      href: "https://www.linkedin.com/company/uptoskills/posts/?feedView=all",
+      href: "https://www.linkedin.com/company/skillrise/posts/?feedView=all",
     },
     {
       icon: <SiFacebook className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />,
       bgColor: "bg-[#1877f2]",
-      href: "https://www.facebook.com/Uptoskills/",
+      href: "https://www.facebook.com/Skillrise/",
     },
   ];
 
@@ -77,8 +77,9 @@ function Footer() {
         {/* Mobile: 2 columns, Tablet: 3 columns, Desktop: 5 columns */}
         <div className="grid grid-cols-1 gap-6 mb-8 sm:gap-10 sm:mb-12 md:grid-cols-3 lg:grid-cols-5">
           {/* 1. BRAND & NEWSLETTER - Full width on mobile */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left col-span-1 md:row-span-2 lg:row-span-1 h-full">  <img
-              src={UpToSkillsImg}
+          <div className="flex flex-col items-center md:items-start text-center md:text-left col-span-1 md:row-span-2 lg:row-span-1 h-full">  
+            <img
+              src={SkillRiseImg}
               alt="Logo"
               className="w-24 sm:w-32 mb-3 sm:mb-4 transition-opacity cursor-pointer hover:opacity-80"
               onClick={() => navigate("/")}
@@ -348,7 +349,7 @@ function Footer() {
         {/* BOTTOM BAR */}
         <div className="flex flex-col items-center justify-between gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-gray-100 md:flex-row">
           <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center md:text-left">
-            ©️ {new Date().getFullYear()} UptoSkills Inc.
+            ©️ {new Date().getFullYear()} SkillRise Inc.
           </p>
 
           <div className="flex items-center gap-1 text-[11px] sm:text-[13px] font-black tracking-tight">

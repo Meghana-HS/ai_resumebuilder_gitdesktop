@@ -17,7 +17,7 @@ export default function Aichat() {
       : [
           {
             from: "bot",
-            text: "Hi! I'm the UpToSkills AI Resume Assistant.\nHow can I help you today?",
+            text: "Hi! I'm the SkillRise AI Resume Assistant.\nHow can I help you today?",
           },
         ];
   });
@@ -137,7 +137,7 @@ export default function Aichat() {
     setMessages([
       {
         from: "bot",
-        text: "Hi! I'm the UpToSkills AI Resume Assistant.\nHow can I help you today?",
+        text: "Hi! I'm the SkillRise AI Resume Assistant.\nHow can I help you today?",
       },
     ]);
     sessionStorage.setItem(
@@ -145,7 +145,7 @@ export default function Aichat() {
       JSON.stringify([
         {
           from: "bot",
-          text: "Hi! I'm the UpToSkills AI Resume Assistant.\nHow can I help you today?",
+          text: "Hi! I'm the SkillRise AI Resume Assistant.\nHow can I help you today?",
         },
       ]),
     );
@@ -179,7 +179,7 @@ export default function Aichat() {
               AI Resume Assistant
             </div>
             <span className="text-[11px] text-slate-400">
-              Powered by UpToSkills AI
+              Powered by SkillRise AI
             </span>
           </div>
 

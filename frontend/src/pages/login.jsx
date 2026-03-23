@@ -137,7 +137,7 @@ export default function Login() {
               <Link to="/" className="inline-block">
                 <img
                   src={images.logo6 || "/logo6.png"}
-                  alt="UptoSkills Logo"
+                  alt="SkillRise Logo"
                   className="w-28 mx-auto mt-2 mb-4"
                 />
               </Link>

@@ -77,7 +77,7 @@ public class AuthService {
             // User notification
             Notification userNotification = new Notification();
             userNotification.setType("FIRST_LOGIN");
-            userNotification.setMessage("Welcome to UptoSkills AI Resume Builder 🎉");
+            userNotification.setMessage("Welcome to SkillRise AI Resume Builder 🎉");
             userNotification.setUser(user);
             userNotification.setActor(Notification.Actor.SYSTEM);
             notificationRepository.save(userNotification);

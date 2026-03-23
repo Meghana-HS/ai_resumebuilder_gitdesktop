@@ -8,7 +8,7 @@ import {
   ChevronRight,
   AlertCircle,
 } from "lucide-react";
-import UpToSkillsImg from "../assets/UptoSkills.webp";
+import SkillRiseImg from "../assets/UptoSkills.webp";
 import NavBar from "../components/NavBar";
 import Footer from "./Footer"
 
@@ -50,7 +50,7 @@ const TermsAndConditions = () => {
                 Acceptance of Terms
               </h2>
               <p className="text-lg leading-relaxed text-gray-600">
-              By accessing or using the UptoSkills website and our AI Resume Builder,
+              By accessing or using the SkillRise website and our AI Resume Builder,
               you agree to comply with and be bound by these Terms of Service.
               These terms apply to all visitors, users, and others who access or use
               the Service. If you do not agree with any part of these terms, you are
@@ -66,9 +66,9 @@ const TermsAndConditions = () => {
                 Intellectual Property
               </h2>
               <p className="text-lg leading-relaxed text-gray-600">
-               All content available on the UptoSkills website, including but not limited
+               All content available on the SkillRise website, including but not limited
                to text, graphics, logos, resume templates, AI algorithms, and software,
-               is the exclusive property of UptoSkills and is protected by applicable
+               is the exclusive property of SkillRise and is protected by applicable
                intellectual property laws. You may not use, modify, reproduce, distribute,
                or create derivative works from any content without our prior written permission.
               </p>
@@ -82,7 +82,7 @@ const TermsAndConditions = () => {
                 Use of the Website
               </h2>
               <p className="text-lg leading-relaxed text-gray-600">
-               You are permitted to use the UptoSkills AI Resume Builder solely for
+               You are permitted to use the SkillRise AI Resume Builder solely for
                personal career development purposes. You agree not to engage in:
               </p>
               <ul className="pl-6 mt-6 space-y-4 text-gray-600 list-none">
@@ -116,7 +116,7 @@ const TermsAndConditions = () => {
                 </h3>
                 <p className="relative z-10 text-lg leading-relaxed text-gray-600">
                 Our AI provides suggestions based on industry patterns and available data.
-                UptoSkills does not guarantee the accuracy, completeness, or reliability
+                SkillRise does not guarantee the accuracy, completeness, or reliability
                 of AI-generated content. Users are responsible for reviewing and verifying
                 all information in their resumes before submission to employers.
                 </p>
@@ -147,7 +147,7 @@ const TermsAndConditions = () => {
                 Limitation of Liability
               </h2>
               <p className="p-6 text-lg italic leading-relaxed text-gray-600 border bg-slate-50 rounded-2xl border-slate-100">
-               To the fullest extent permitted by applicable law, UptoSkills and its affiliates
+               To the fullest extent permitted by applicable law, SkillRise and its affiliates
                shall not be liable for any direct, indirect, incidental, consequential, or
                special damages (including but not limited to loss of job opportunities)
                arising from your use of the platform or from any resume’s inability to
@@ -163,7 +163,7 @@ const TermsAndConditions = () => {
               <p className="mb-1 text-xs font-bold tracking-widest text-gray-400 uppercase">
                 Email
               </p>
-              <p className="text-sm font-bold">info@uptoskills.com</p>
+              <p className="text-sm font-bold">info@skillrise.com</p>
             </div>
             <div className="flex flex-col items-center p-8 text-center bg-slate-50 rounded-[2rem] transition-transform hover:-translate-y-1">
               <Phone className="text-[#0077cc] mb-4" size={28} />

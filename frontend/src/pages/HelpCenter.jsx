@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import UpToSkillsImg from '../assets/UptoSkills.webp';
+import SkillRiseImg from '../assets/UptoSkills.webp';
 import NavBar from '../components/NavBar';
 import Footer from "./Footer";
 
@@ -35,7 +35,7 @@ function HelpCenter() {
                     </div>
 
                     <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-                        The UptoSkills AI Resume Builder simplifies the transition from a blank page to a polished career document. Our guided process ensures no critical information is overlooked.
+                        The SkillRise AI Resume Builder simplifies the transition from a blank page to a polished career document. Our guided process ensures no critical information is overlooked.
                     </p>
                     <div className="space-y-8">
                         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">

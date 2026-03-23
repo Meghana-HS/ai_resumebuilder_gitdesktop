@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import UptoSkillsLogo from "../../../assets/logo6.png";
+import SkillRiseLogo from "../../../assets/logo6.png";
 import { useNotifications } from "../../../context/NotificationContext";
 import axiosInstance from "../../../api/axios";
 
@@ -120,8 +120,8 @@ export default function AdminNavbar({ isCollapsed, setIsCollapsed, isMobileOpen,
             onClick={() => navigate("/")}
           >
             <img
-              src={UptoSkillsLogo}
-              alt="UptoSkills"
+              src={SkillRiseLogo}
+              alt="SkillRise"
               className="w-44 h-11 object-contain transition-all duration-300"
             />
           </div>

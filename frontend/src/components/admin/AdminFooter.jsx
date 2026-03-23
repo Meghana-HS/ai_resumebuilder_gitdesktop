@@ -9,7 +9,7 @@ function AdminFooter() {
         © {year}
       </div>
       <div className="text-black-600 font-bold">
-        UptoSkills.
+        SkillRise.
       </div>
       <div className="text-gray-500 font-medium">
         All Rights Reserved.
