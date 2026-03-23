@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   generateWordFromReactElement,
   sanitiseFilename,
@@ -181,7 +181,7 @@ const CVBuilder = () => {
 
   const saveRecentActivity = async (html, action = "visited") => {
     try {
-      const displayData = previewDisplayData;
+      const displayData = mergeWithSampleData(formData);
 
       const sanitize = (s) =>
         (s || "")
@@ -228,7 +228,7 @@ const CVBuilder = () => {
 
       const { createRoot } = await import("react-dom/client");
 
-      const displayData = previewDisplayData;
+      const displayData = mergeWithSampleData(formData);
 
       await new Promise((resolve) => {
         const root = createRoot(container);
@@ -255,83 +255,6 @@ const CVBuilder = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
   const [documentTitle, setDocumentTitle] = useState("");
-  const downloadLockRef = useRef(false);
-
-  /* ── Match CVPreview's filtered displayData ────────────────────────── */
-  const hasUserEnteredExperience = useMemo(() => {
-    return formData?.experience?.some(
-      (exp) =>
-        exp?.company?.trim() ||
-        exp?.position?.trim() ||
-        exp?.description?.trim(),
-    );
-  }, [formData?.experience]);
-
-  const hasUserEnteredEducation = useMemo(() => {
-    return formData?.education?.some(
-      (edu) =>
-        edu?.school?.trim() ||
-        edu?.degree?.trim() ||
-        edu?.field?.trim() ||
-        edu?.year?.trim(),
-    );
-  }, [formData?.education]);
-
-  const hasUserEnteredProjects = useMemo(() => {
-    return formData?.projects?.some((proj) => {
-      const linkStr =
-        typeof proj?.link === "string"
-          ? proj.link
-          : proj?.link?.github ||
-            proj?.link?.liveLink ||
-            proj?.link?.other ||
-            "";
-
-      return (
-        proj?.title?.trim() ||
-        proj?.name?.trim() ||
-        proj?.description?.trim() ||
-        linkStr?.trim()
-      );
-    });
-  }, [formData?.projects]);
-
-  const hasUserEnteredCertifications = useMemo(() => {
-    return formData?.certifications?.some(
-      (cert) =>
-        cert?.name?.trim() || cert?.issuer?.trim() || cert?.date?.trim(),
-    );
-  }, [formData?.certifications]);
-
-  const previewDisplayData = useMemo(() => {
-    const merged = mergeWithSampleData(formData);
-
-    // Clear optional sections if user didn't enter real data.
-    // (This matches CVPreview's behavior so download previews stay identical.)
-    if (!hasUserEnteredExperience && Array.isArray(merged.experience)) {
-      merged.experience = [];
-    }
-    if (!hasUserEnteredEducation && Array.isArray(merged.education)) {
-      merged.education = [];
-    }
-    if (!hasUserEnteredProjects && Array.isArray(merged.projects)) {
-      merged.projects = [];
-    }
-    if (
-      !hasUserEnteredCertifications &&
-      Array.isArray(merged.certifications)
-    ) {
-      merged.certifications = [];
-    }
-
-    return merged;
-  }, [
-    formData,
-    hasUserEnteredExperience,
-    hasUserEnteredEducation,
-    hasUserEnteredProjects,
-    hasUserEnteredCertifications,
-  ]);
 
   /* Measure sticky navbar height for float offset */
   useEffect(() => {
@@ -363,7 +286,7 @@ const CVBuilder = () => {
   const saveDownloadRecord = async (html, format = "PDF") => {
     try {
       // Use document title first, then merged data for consistent naming
-      const displayData = previewDisplayData;
+      const displayData = mergeWithSampleData(formData);
       const nameToUse = documentTitle || displayData.fullName || "Document";
       await axiosInstance.post("/api/downloads", {
         name: `cv_${nameToUse}`,
@@ -406,7 +329,7 @@ const CVBuilder = () => {
 
       const { createRoot } = await import("react-dom/client");
 
-      const displayData = previewDisplayData;
+      const displayData = mergeWithSampleData(formData);
 
       await new Promise((resolve) => {
         const root = createRoot(container);
@@ -448,7 +371,7 @@ const CVBuilder = () => {
       document.body.appendChild(container);
 
       const { createRoot } = await import("react-dom/client");
-      const displayData = previewDisplayData;
+      const displayData = mergeWithSampleData(formData);
 
       await new Promise((resolve) => {
         const root = createRoot(container);
@@ -472,12 +395,10 @@ const CVBuilder = () => {
       return;
     }
 
-    if (downloadLockRef.current) return;
-    downloadLockRef.current = true;
     setIsDownloading(true);
 
     try {
-      const displayData = previewDisplayData;
+      const displayData = mergeWithSampleData(formData);
       const baseName =
         sanitiseFilename(documentTitle) ||
         sanitiseFilename(displayData.fullName) ||
@@ -522,7 +443,6 @@ const CVBuilder = () => {
       toast.error("Failed to download Word.");
     } finally {
       setIsDownloading(false);
-      downloadLockRef.current = false;
     }
   };
 
@@ -534,8 +454,6 @@ const CVBuilder = () => {
       return;
     }
 
-    if (downloadLockRef.current) return;
-    downloadLockRef.current = true;
     setIsDownloading(true);
 
     const container = document.createElement("div");
@@ -549,7 +467,7 @@ const CVBuilder = () => {
     document.body.appendChild(container);
 
     const { createRoot } = await import("react-dom/client");
-    const displayData = previewDisplayData;
+    const displayData = mergeWithSampleData(formData);
 
     await new Promise((resolve) => {
       const root = createRoot(container);
@@ -619,7 +537,6 @@ const CVBuilder = () => {
     } finally {
       document.body.removeChild(container);
       setIsDownloading(false);
-      downloadLockRef.current = false;
     }
   };
 
@@ -1187,7 +1104,7 @@ const CVBuilder = () => {
                           const { createRoot } =
                             await import("react-dom/client");
 
-                          const displayData = previewDisplayData;
+                          const displayData = mergeWithSampleData(formData);
 
                           await new Promise((resolve) => {
                             const root = createRoot(container);
@@ -1293,7 +1210,7 @@ const CVBuilder = () => {
 
                       const { createRoot } = await import("react-dom/client");
 
-                      const displayData = previewDisplayData;
+                      const displayData = mergeWithSampleData(formData);
 
                       await new Promise((resolve) => {
                         const root = createRoot(container);

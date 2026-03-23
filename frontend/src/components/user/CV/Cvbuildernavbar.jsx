@@ -208,10 +208,7 @@ const CVBuilderTopBar = ({
                 {showDownloadMenu && (
                   <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
                     <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onClick={() => {
                         setShowDownloadMenu(false);
                         onDownload?.();
                       }}
@@ -222,10 +219,7 @@ const CVBuilderTopBar = ({
                     </button>
                     <div className="border-t border-gray-100" />
                     <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onClick={() => {
                         setShowDownloadMenu(false);
                         onDownloadWord?.();
                       }}
@@ -290,10 +284,7 @@ const CVBuilderTopBar = ({
           {showDownloadMenu && (
             <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
               <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                onClick={() => {
                   setShowDownloadMenu(false);
                   onDownload?.();
                 }}
@@ -304,10 +295,7 @@ const CVBuilderTopBar = ({
               </button>
               <div className="border-t border-gray-100" />
               <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                onClick={() => {
                   setShowDownloadMenu(false);
                   onDownloadWord?.();
                 }}

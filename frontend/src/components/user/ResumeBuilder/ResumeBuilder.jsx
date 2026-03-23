@@ -317,7 +317,6 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const previewRef = useRef(null);
-  const downloadLockRef = useRef(false);
 
   /* Measure sticky navbar height for float offset (same as CV) */
   useEffect(() => {
@@ -434,11 +433,7 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
   };
 
   const handleDownload = async (e) => {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
-    
-    if (downloadLockRef.current) return;
-    downloadLockRef.current = true;
+    if (exporting) return;
     try {
       setExporting(true);
       // Capture HTML from rendered template before generating PDF
@@ -466,13 +461,6 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
         } finally {
           document.body.removeChild(container);
         }
-      }
-
-      // Include template-specific CSS in the stored HTML snapshot.
-      // Downloads page previews this HTML inside an iframe.
-      const templateCss = currentTemplate?.style || "";
-      if (templateCss.trim() !== "" && capturedHtml?.trim() !== "") {
-        capturedHtml = `<style>${templateCss}</style>${capturedHtml}`;
       }
 
       await GenerateResumePDF();
@@ -504,25 +492,16 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
       }
     } finally {
       setExporting(false);
-      downloadLockRef.current = false;
     }
   };
 
-  const handleDownloadWord = async (e) => {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
-    
-    if (downloadLockRef.current) return;
-    downloadLockRef.current = true;
-
+  const handleDownloadWord = async () => {
     const templateComponent = currentTemplate?.component;
     if (!templateComponent) {
       alert("No template selected");
-      downloadLockRef.current = false;
       return;
     }
 
-    setLoading(true);
     const container = document.createElement("div");
     Object.assign(container.style, {
       position: "fixed",
@@ -544,11 +523,6 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
       });
 
       const bodyHtml = container.innerHTML;
-      const templateCss = currentTemplate?.style || "";
-      const htmlForRecord =
-        templateCss.trim() !== ""
-          ? `<style>${templateCss}</style>${bodyHtml}`
-          : bodyHtml;
 
       const baseName =
         sanitiseFilename(documentTitle) ||
@@ -571,7 +545,7 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
           type: "resume",
           action: "download",
           format: "DOCX",
-          html: htmlForRecord,
+          html: bodyHtml,
           template: selectedTemplate,
           size: "200 KB",
         });
@@ -583,8 +557,6 @@ const ResumeBuilder = ({ setActivePage = () => {} }) => {
       alert("Failed to download Word.");
     } finally {
       document.body.removeChild(container);
-      setLoading(false);
-      downloadLockRef.current = false;
     }
   };
 

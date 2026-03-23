@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  generateWordFromHtml,
   generateWordFromReactElement,
   sanitiseFilename,
 } from "../../../utils/wordExport";
@@ -849,23 +848,19 @@ ${
         "Cover_Letter";
       const filename = `coverletter_${baseName}`;
 
-      // Prefer generating DOCX from the captured preview HTML, because
-      // it guarantees we export the same DOM structure/styles the user sees.
-      if (capturedHtml && capturedHtml.trim() !== "") {
-        await generateWordFromHtml(capturedHtml, filename);
-      } else {
-        // Fallback: render the selected template directly.
-        // (This path is less reliable if the template preview pipeline differs.)
-        const TemplateComponent = CoverLetterTemplates[selectedTemplate];
-        if (!TemplateComponent) {
-          alert("No template selected. Please choose a template first.");
-          return;
-        }
-        await generateWordFromReactElement(
-          <TemplateComponent formData={formData} exportDate={date} />,
-          filename,
-        );
+      // Determine which template component to render
+      const TemplateComponent = CoverLetterTemplates[selectedTemplate];
+      if (!TemplateComponent) {
+        alert("No template selected. Please choose a template first.");
+        return;
       }
+
+      // Render the same template that the PDF uses and generate a
+      // pixel-perfect .docx (html2canvas → image → real .docx file)
+      await generateWordFromReactElement(
+        <TemplateComponent formData={formData} exportDate={date} />,
+        filename,
+      );
 
       // Persist the download record so it appears on the Downloads page
       await saveDownloadRecord(capturedHtml, "DOCX");
