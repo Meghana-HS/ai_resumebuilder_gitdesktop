@@ -47,6 +47,9 @@ export default function Login() {
     setLoading(true);
 
     try {
+      console.log("Attempting login to:", `${axiosInstance.defaults.baseURL}/api/auth/login`);
+      console.log("Login payload:", { email: emailtext, password: "***", rememberMe });
+      
       const response = await axiosInstance.post("/api/auth/login", {
         email: emailtext,
         password: passwordtext,
@@ -88,10 +91,22 @@ export default function Login() {
         }
       }, 150);
     } catch (error) {
-      console.log(error);
-      toast.error(
-        error?.response?.data?.message || "Login failed. Please try again.",
-      );
+      console.error("Login error details:", error);
+      console.error("Error response:", error?.response);
+      console.error("Error status:", error?.response?.status);
+      console.error("Error data:", error?.response?.data);
+      
+      let errorMessage = "Login failed. Please try again.";
+      
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        errorMessage = "Cannot connect to server. Please check if backend is running on port 8081.";
+      } else if (error.response?.status === 401) {
+        errorMessage = "Invalid email or password.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

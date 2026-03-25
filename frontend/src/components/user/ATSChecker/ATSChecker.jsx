@@ -39,7 +39,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 const SESSION_KEY = "ats_preview_pdf";
 
 /* ─── Drag-and-Drop Upload Zone ─── */
-function UploadZone({ onFileChange }) {
+function UploadZone({ onFileChange, jobDescription, setJobDescription }) {
   const fileInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -56,7 +56,7 @@ function UploadZone({ onFileChange }) {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8">
+    <div className="flex-1 flex flex-col items-center justify-center p-8">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -77,6 +77,22 @@ function UploadZone({ onFileChange }) {
           </h2>
           <p className="text-slate-500 text-sm">
             Upload your resume and get an instant score with actionable feedback
+          </p>
+        </div>
+
+        {/* Job Description Input */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-slate-700 mb-2">
+            Job Description (Required)
+          </label>
+          <textarea
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            placeholder="Paste the job description here for better ATS analysis..."
+            className="w-full h-32 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+          />
+          <p className="text-xs text-slate-400 mt-1">
+            {jobDescription.length} characters • Helps us match your resume to specific job requirements
           </p>
         </div>
 
@@ -884,6 +900,7 @@ const ATSChecker = ({ onSidebarToggle }) => {
   const [previewType, setPreviewType] = useState("pdf");
   const analysisStartTimeRef = useRef(null);
   const [activityTick, setActivityTick] = useState(0);
+  const [jobDescription, setJobDescription] = useState(""); // Add job description state
 
   const logActivity = async (action = "visited", html = "") => {
     try {
@@ -1062,6 +1079,7 @@ const ATSChecker = ({ onSidebarToggle }) => {
     formData.append("jobTitle", "Placeholder title");
     formData.append("templateId", "63f1c4e2a3b4d5f678901234");
     formData.append("resumeprofileId", "63f1c4e2a3b4d5f678901235");
+    formData.append("jobDescription", jobDescription); // Add job description
 
     try {
       const res = await axiosInstance.post("/api/resume/ats-scan", formData, {
@@ -1679,7 +1697,11 @@ const ATSChecker = ({ onSidebarToggle }) => {
                     <ATSDocPreview text={resumeText} />
                   </div>
                 ) : (
-                  <UploadZone onFileChange={handleFileChange} />
+                  <UploadZone 
+                    onFileChange={handleFileChange} 
+                    jobDescription={jobDescription}
+                    setJobDescription={setJobDescription}
+                  />
                 )}
               </motion.div>
             )}
